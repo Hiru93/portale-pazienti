@@ -1,0 +1,13 @@
+**/.git
+**/.svn
+**/.hg
+**/node_modules
+**/android
+**/@typess
+**/.vscode
+**/cypress
+**/dist
+**/e2e
+**/ios
+**/resources
+**/*.sh
