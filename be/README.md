@@ -1,6 +1,6 @@
-# INMP SaluteOra - Backend
+# Portale Pazienti - Backend
 
-NestJS backend for the INMP SaluteOra project, using PostgreSQL (via Knex) and Swagger for API documentation.
+NestJS backend for the Portale Pazienti project, using PostgreSQL (via Knex) and Swagger for API documentation.
 
 ## Prerequisites
 
@@ -14,26 +14,26 @@ Create a `.env` file in the project root with the following structure:
 
 ```env
 # General
-INMP_LOADED_ENV=Development          # Environment label (Development, Production, ...)
+PP_LOADED_ENV=Development          # Environment label (Development, Production, ...)
 
 # Docker container names
-INMP_DB_CONTAINER_NAME=inmp_so_db    # Name for the PostgreSQL container
-INMP_BE_CONTAINER_NAME=inmp_so_be    # Name for the backend container
+PP_DB_CONTAINER_NAME=pp_db           # Name for the PostgreSQL container
+PP_BE_CONTAINER_NAME=pp_be           # Name for the backend container
 
 # PostgreSQL connection
-INMP_PG_DB=INMPso                    # Database name
-INMP_PG_USER=exaMantainer            # Database user
-INMP_PG_PASS=pass123%               # Database password
-INMP_PG_HOST=localhost               # Host (use "localhost" for local dev, "db" is set automatically in Docker)
-INMP_PG_PORT=5433                    # Exposed port on the host (maps to 5432 inside the container)
+PP_PG_DB=portale_pazienti            # Database name
+PP_PG_USER=exaMantainer              # Database user
+PP_PG_PASS=pass123%                  # Database password
+PP_PG_HOST=localhost                 # Host (use "localhost" for local dev, "db" is set automatically in Docker)
+PP_PG_PORT=5433                      # Exposed port on the host (maps to 5432 inside the container)
 
 # Auth / Security
-INMP_BE_SECRET=<your_jwt_secret>     # JWT secret key
-INMP_BE_SALT=<your_bcrypt_salt>      # Bcrypt salt
-INMP_SALT_RNDS=10                    # Bcrypt salt rounds
+PP_BE_SECRET=<your_jwt_secret>       # JWT secret key
+PP_BE_SALT=<your_bcrypt_salt>        # Bcrypt salt
+PP_SALT_RNDS=10                      # Bcrypt salt rounds
 ```
 
-> When running via `docker-compose`, `INMP_PG_HOST` is overridden to `db` (the service name) and `INMP_PG_PORT` is set to `5432` internally. The `.env` values are only relevant for local development.
+> When running via `docker-compose`, `PP_PG_HOST` is overridden to `db` (the service name) and `PP_PG_PORT` is set to `5432` internally. The `.env` values are only relevant for local development.
 
 ## Project setup
 
@@ -83,8 +83,8 @@ docker-compose up --build -d
 npm run db-stop        # alias for: docker-compose down --rmi all
 ```
 
-- The DB data is persisted in a named volume (`INMP-so-db-volume`).
-- The containers are connected via the `INMP-so-network` Docker network.
+- The DB data is persisted in a named volume (`pp-db-volume`).
+- The containers are connected via the `pp-network` Docker network.
 - The DB is exposed on the host at port **5433** (mapped from 5432 inside the container).
 - The backend is exposed at port **3000**.
 

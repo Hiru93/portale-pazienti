@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+be/node_modules/
+fe/node_modules/
 
 # Build output
 dist/
@@ -46,4 +48,4 @@ yalc.lock
 previewConfig.json
 
 # Docker volumes
-INMP-so-db-volume/
+pp-db-volume/

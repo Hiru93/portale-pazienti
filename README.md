@@ -1,6 +1,4 @@
-# INMP SaluteOra - Portale Pazienti
-
-Patient portal for INMP (Istituto Nazionale per la promozione della salute delle popolazioni Migranti e per il contrasto delle malattie della Povertà).
+# Portale Pazienti
 
 ## Architecture
 
@@ -176,12 +174,12 @@ The backend uses a `.env` file in `be/` with the following variables:
 
 | Variable | Description |
 |---|---|
-| `INMP_LOADED_ENV` | Environment name (e.g. `Development`) |
-| `INMP_PG_DB` | PostgreSQL database name |
-| `INMP_PG_USER` | PostgreSQL user |
-| `INMP_PG_PASS` | PostgreSQL password |
-| `INMP_PG_HOST` | PostgreSQL host (`localhost` for local, `db` in Docker) |
-| `INMP_PG_PORT` | PostgreSQL port (`5433` local, `5432` in Docker) |
-| `INMP_BE_SECRET` | JWT secret |
-| `INMP_BE_SALT` | Bcrypt salt |
-| `INMP_SALT_RNDS` | Bcrypt salt rounds |
+| `PP_LOADED_ENV` | Environment name (e.g. `Development`) |
+| `PP_PG_DB` | PostgreSQL database name |
+| `PP_PG_USER` | PostgreSQL user |
+| `PP_PG_PASS` | PostgreSQL password |
+| `PP_PG_HOST` | PostgreSQL host (`localhost` for local, `db` in Docker) |
+| `PP_PG_PORT` | PostgreSQL port (`5433` local, `5432` in Docker) |
+| `PP_BE_SECRET` | JWT secret |
+| `PP_BE_SALT` | Bcrypt salt |
+| `PP_SALT_RNDS` | Bcrypt salt rounds |

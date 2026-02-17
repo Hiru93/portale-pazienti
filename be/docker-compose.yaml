@@ -1,0 +1,49 @@
+services:
+  db:
+    build:
+      context: ./db
+      dockerfile: ./Dockerfile
+    image: 'portale-pazienti/db'
+    container_name: ${PP_DB_CONTAINER_NAME}
+    environment:
+      POSTGRES_DB: ${PP_PG_DB}
+      POSTGRES_USER: ${PP_PG_USER}
+      POSTGRES_PASSWORD: ${PP_PG_PASS}
+    volumes:
+      - pp-db-volume:/var/lib/postgresql/data
+    ports:
+      - '5433:5432'
+    networks:
+      - default
+    restart: on-failure:3
+  be:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: 'portale-pazienti/be'
+    container_name: ${PP_BE_CONTAINER_NAME}
+    environment:
+      PP_LOADED_ENV: ${PP_LOADED_ENV}
+      PP_BE_SECRET: ${PP_BE_SECRET}
+      PP_BE_SALT: ${PP_BE_SALT}
+      PP_SALT_RNDS: ${PP_SALT_RNDS}
+      PP_PG_HOST: db
+      PP_PG_USER: ${PP_PG_USER}
+      PP_PG_PASS: ${PP_PG_PASS}
+      PP_PG_DB: ${PP_PG_DB}
+      PP_PG_PORT: 5432
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    networks:
+      - default
+    restart: on-failure:3
+
+volumes:
+  pp-db-volume:
+    name: pp-db-volume
+
+networks:
+  default:
+    name: pp-network
