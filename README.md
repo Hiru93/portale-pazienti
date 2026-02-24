@@ -1,5 +1,19 @@
 # Portale Pazienti
 
+## Background & Project Overview
+
+This project originates from a drafted initiative I took part in during my experience at one of the companies I worked with. What follows is a personal reimplementation and evolution of that original concept.
+
+The core idea is a **free-to-use portal aimed at patients in need of dental care**, connecting them with a network of dentists who voluntarily join the initiative. The platform serves three distinct groups of users, each with their own dedicated experience:
+
+- **Patients** — can browse the available dentists and book a dental visit, entirely free of charge.
+- **Dentists** — upon signing up to the initiative, each dentist gains access to a personal schedule view. Day by day, they can review incoming booking requests and choose to accept or decline each one. Once a visit has taken place, the dentist can submit a reimbursement request for that appointment.
+- **Operators** — a back-office role responsible for handling the reimbursement flow. Operators review all incoming reimbursement requests submitted by dentists and mark each one as either resolved or pending.
+
+The project as a whole revolves around the idea of making dental care more accessible: a no-cost entry point for patients, a streamlined scheduling and billing tool for participating dentists, and an administrative interface for the operators managing the financial side of the initiative.
+
+---
+
 ## Architecture
 
 The project is a monorepo with two main directories:
