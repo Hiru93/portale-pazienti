@@ -9,19 +9,24 @@ import type {
 } from "@/app/types"
 import { createAppSlice } from "../../app/createAppSlice"
 import { doLogin, doSignup } from "./LoginAPI"
+import { loadLocalInfo, tokenParse } from "@/utils/store-utils"
 
 export type LoginSliceState = {
   loginStatus: "idle" | "loading" | "success" | "failed"
   signupStatus: "idle" | "loading" | "success" | "failed"
   authToken: string | null
+  authLevel: string[] | null
   userInfo: BasicUserInfo | null
 }
+
+const initialTokenValue: string | null = loadLocalInfo("authToken")
 
 const initialState: LoginSliceState = {
   loginStatus: "idle",
   signupStatus: "idle",
-  authToken: null,
-  userInfo: null,
+  authToken: initialTokenValue,
+  authLevel: initialTokenValue ? tokenParse(initialTokenValue).user_auth : null,
+  userInfo: initialTokenValue ? tokenParse(initialTokenValue).user_data : null,
 }
 
 export const loginSlice = createAppSlice({
@@ -41,14 +46,28 @@ export const loginSlice = createAppSlice({
           action: PayloadAction<BaseResponse<LoginResponse>>,
         ) => {
           console.info("Login successful:", action.payload)
+          const responseData = action.payload.data ?? {
+            access_token: null,
+          }
           state.loginStatus = "success"
-          state.authToken = action.payload.data?.access_token ?? null
-          state.userInfo = action.payload.data?.user_data ?? null
+          state.authToken = responseData.access_token ?? null
+          if (
+            responseData.access_token &&
+            loadLocalInfo("authToken") !== responseData.access_token
+          ) {
+            localStorage.setItem("authToken", responseData.access_token)
+          }
+          const parsedToken = tokenParse(state.authToken ?? "")
+          state.authLevel = parsedToken.user_auth
+          state.userInfo = parsedToken.user_data
         },
         rejected: state => {
           console.error("Login failed")
           state.loginStatus = "failed"
           state.authToken = null
+          localStorage.removeItem("authToken")
+          state.authLevel = null
+          state.userInfo = null
         },
       },
     ),
@@ -86,6 +105,7 @@ export const loginSlice = createAppSlice({
     selectLoginStatus: state => state.loginStatus,
     selectSignupStatus: state => state.signupStatus,
     selectUserInfo: state => state.userInfo,
+    selectAuthLevel: state => state.authLevel,
   },
 })
 
@@ -96,4 +116,5 @@ export const {
   selectLoginStatus,
   selectSignupStatus,
   selectUserInfo,
+  selectAuthLevel,
 } = loginSlice.selectors

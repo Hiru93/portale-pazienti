@@ -1,3 +1,21 @@
+export type AuthLevels = {
+  basic: string[],
+  operator: string[],
+  admin: string[]
+}
+
+export type DecodedToken = {
+  exp: number,
+  iat: number,
+  user_auth: string[],
+  user_email: string,
+  user_id: number,
+  user_data: {
+    first_name: string,
+    last_name: string,
+  }
+}
+
 export type BaseResponse<T> = {
   data?: T,
   error?: HttpError

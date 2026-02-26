@@ -1,18 +1,22 @@
-// #region [Libraries]
+// #region [Types Imports]
+// #endregion
+
+// #region [Libraries Imports]
 import { createBrowserRouter } from "react-router"
 import { RouterProvider } from "react-router/dom"
 import { Toaster } from "@/components/ui/toaster";
 // #endregion
 
-// #region [Styles]
+// #region [Styles Imports]
 import "./App.css"
 // #endregion
 
-// #region [Pages]
+// #region [Pages Imports]
 import { Login } from "@/features/login/Login";
 import { Dashboard } from "@/features/dashboard/Dashboard";
 // #endregion
-// #region [Utils]
+
+// #region [Utils Imports]
 import { ProtectedRoute } from "@/utils/utils";
 // #endregion
 
@@ -22,7 +26,7 @@ const router = createBrowserRouter([
     element: <Login />
   },{
     path: "/dashboard",
-    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
+    element: <ProtectedRoute requiredRole="basic"><Dashboard /></ProtectedRoute>,
   }
 ]);
 

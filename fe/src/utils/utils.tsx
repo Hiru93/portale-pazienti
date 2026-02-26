@@ -2,11 +2,31 @@ import { type JSX } from "react";
 import { useAppSelector } from "@/app/hooks";
 import { Navigate } from "react-router";
 import { selectAuthToken } from "@/features/login/LoginSlice";
+import { authLevels } from "./constants";
+import { tokenParse } from "./store-utils";
 
-export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+export const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole: string }) => {
     const authToken = useAppSelector(selectAuthToken)
+    const decodedToken = authToken ? tokenParse(authToken) : null
+
+    console.log("Decoded token in ProtectedRoute: ", decodedToken)
+    console.log("Required role: ", authLevels[requiredRole as keyof typeof authLevels])
 
     if (!authToken) return <Navigate to="/" />
+    if (!decodedToken) return <Navigate to="/" />
+    if (decodedToken.exp && Date.now() >= decodedToken.exp * 1000) return <Navigate to="/" />
+    if (!decodedToken.user_auth.length) return <Navigate to="/" />
+    if (!authLevels[requiredRole as keyof typeof authLevels].some(role => decodedToken.user_auth.includes(role))) return <Navigate to="/" />
 
     return children
+}
+
+export const useHasAuth = (role: string): boolean => {
+    const authToken = useAppSelector(selectAuthToken)
+    const decodedToken = authToken ? tokenParse(authToken) : null
+
+    console.log("@@ Decoded token in useHasAuth: ", decodedToken)
+    console.log("@@ Required role: ", authLevels[role as keyof typeof authLevels])
+
+    return !!authToken && !!decodedToken?.user_auth.length && authLevels[role as keyof typeof authLevels].some(r => decodedToken.user_auth.includes(r))
 }
