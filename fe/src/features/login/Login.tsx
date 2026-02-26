@@ -11,7 +11,7 @@ import styles from "./Login.module.css"
 // #region [Library Imports]
 import { useState, useMemo, useRef, useEffect } from "react"
 import { useNavigate } from "react-router";
-import { useAppDispatch, useAppSelector } from "../../app/hooks"
+import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import {
     loginUser,
     signupUser,
@@ -42,9 +42,6 @@ import { strengthOptions } from "@/utils/constants"
 import { passwordStrength } from "check-password-strength"
 import { toaster } from "@/components/ui/toaster"
 // #endregion [Library Imports]
-
-// #region [Components Imports]
-// #endregion [Components Imports]
 
 
 export const Login = (): JSX.Element => {

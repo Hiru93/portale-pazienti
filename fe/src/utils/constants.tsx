@@ -1,5 +1,5 @@
+import { type AuthLevels } from "@/app/types";
 import { type Options } from "check-password-strength";
-// import { type PasswordStrengthOptions } from "./UtilsTypes"
 
 export const baseUrl = "http://localhost:3000/api"
 
@@ -9,3 +9,9 @@ export const strengthOptions: Options<string> = [
     { id: 3, value: "strong", minDiversity: 3, minLength: 8 },
     { id: 4, value: "very-strong", minDiversity: 4, minLength: 12 }
 ];
+
+export const authLevels: AuthLevels = {
+    basic: ["patient", "specialist", "operator", "ghost"],
+    operator: ["operator", "ghost"],
+    admin: ["ghost"]
+}
