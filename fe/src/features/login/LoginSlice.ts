@@ -4,16 +4,19 @@ import type {
   BasicUserInfo,
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
+  LogoutResponse,
   SignupRequest,
   SignupResponse,
 } from "@/app/types"
 import { createAppSlice } from "../../app/createAppSlice"
-import { doLogin, doSignup } from "./LoginAPI"
+import { doLogin, doLogout, doSignup } from "./LoginAPI"
 import { loadLocalInfo, tokenParse } from "@/utils/store-utils"
 
 export type LoginSliceState = {
   loginStatus: "idle" | "loading" | "success" | "failed"
   signupStatus: "idle" | "loading" | "success" | "failed"
+  logoutStatus: "idle" | "loading" | "success" | "failed"
   authToken: string | null
   authLevel: string[] | null
   userInfo: BasicUserInfo | null
@@ -24,6 +27,7 @@ const initialTokenValue: string | null = loadLocalInfo("authToken")
 const initialState: LoginSliceState = {
   loginStatus: "idle",
   signupStatus: "idle",
+  logoutStatus: "idle",
   authToken: initialTokenValue,
   authLevel: initialTokenValue ? tokenParse(initialTokenValue).user_auth : null,
   userInfo: initialTokenValue ? tokenParse(initialTokenValue).user_data : null,
@@ -50,6 +54,7 @@ export const loginSlice = createAppSlice({
             access_token: null,
           }
           state.loginStatus = "success"
+          state.logoutStatus = "idle"
           state.authToken = responseData.access_token ?? null
           if (
             responseData.access_token &&
@@ -68,6 +73,26 @@ export const loginSlice = createAppSlice({
           localStorage.removeItem("authToken")
           state.authLevel = null
           state.userInfo = null
+        },
+      },
+    ),
+    logoutUser: create.asyncThunk(
+      async (params: LogoutRequest): Promise<BaseResponse<LogoutResponse>> => {
+        return await doLogout(params)
+      },
+      {
+        pending: state => {
+          state.logoutStatus = "loading"
+        },
+        fulfilled: state => {
+          state.logoutStatus = "success"
+          state.authToken = null
+          localStorage.removeItem("authToken")
+          state.authLevel = null
+          state.userInfo = null
+        },
+        rejected: state => {
+          state.logoutStatus = "failed"
         },
       },
     ),
@@ -104,17 +129,19 @@ export const loginSlice = createAppSlice({
     selectAuthToken: state => state.authToken,
     selectLoginStatus: state => state.loginStatus,
     selectSignupStatus: state => state.signupStatus,
+    selectLogoutStatus: state => state.logoutStatus,
     selectUserInfo: state => state.userInfo,
     selectAuthLevel: state => state.authLevel,
   },
 })
 
-export const { loginUser, signupUser, resetStatus } = loginSlice.actions
+export const { loginUser, signupUser, logoutUser, resetStatus } = loginSlice.actions
 
 export const {
   selectAuthToken,
   selectLoginStatus,
   selectSignupStatus,
+  selectLogoutStatus,
   selectUserInfo,
   selectAuthLevel,
 } = loginSlice.selectors

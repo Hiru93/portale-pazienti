@@ -576,7 +576,7 @@ export const Login = (): JSX.Element => {
                                         <Button
                                             colorPalette="cyan"
                                             variant="ghost"
-                                            spinner={<BeatLoader size="xs" color="white" />}
+                                            spinner={<BeatLoader size="xs" color="cyan" />}
                                             onClick={() => {
                                                 handleUserCreation()
                                             }}

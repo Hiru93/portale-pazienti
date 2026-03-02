@@ -2,7 +2,7 @@ import { baseUrl } from "@/utils/constants"
 
 // #region [Type Imports]
 import type { BaseResponse } from "@/app/types/CommonTypes"
-import type { LoginRequest, LoginResponse, SignupRequest, SignupResponse } from "@/app/types";
+import type { LoginRequest, LoginResponse, LogoutRequest, LogoutResponse, SignupRequest, SignupResponse } from "@/app/types";
 // #endregion [Type Imports]
 
 // #region [Library Imports]
@@ -32,6 +32,21 @@ export const doSignup = async (params: SignupRequest): Promise<BaseResponse<Sign
       .post(`${baseUrl}/${urlContextUsers}/register`, params)
       .then((response: BaseResponse<SignupResponse>) => {
         console.log("Signup response: ", response)
+        if (response.error) reject(new Error({message: response.error.error, code: response.error.code}.message))
+        resolve({ data: response.data })
+      })
+      .catch((error: unknown) => {
+        reject(error as Error)
+      })
+  })
+
+
+export const doLogout = async (params: LogoutRequest): Promise<BaseResponse<LogoutResponse>> => 
+  new Promise<BaseResponse<LogoutResponse>>((resolve, reject) => {
+    axios
+      .post(`${baseUrl}/${urlContextLogin}/logout`, params)
+      .then((response: BaseResponse<LogoutResponse>) => {
+        console.log("Logout response: ", response)
         if (response.error) reject(new Error({message: response.error.error, code: response.error.code}.message))
         resolve({ data: response.data })
       })

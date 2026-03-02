@@ -26,6 +26,14 @@ export type SignupResponse = {
   message: string
 }
 
+export type LogoutRequest = {
+  token: string
+}
+
+export type LogoutResponse = {
+  message: string
+}
+
 export type BasicUserInfo = {
   first_name: string
   last_name: string
