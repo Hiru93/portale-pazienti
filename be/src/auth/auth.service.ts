@@ -20,7 +20,6 @@ export class AuthService {
     password: string,
   ): Promise<{
     access_token: string;
-    user_data: { first_name: string; last_name: string };
   }> {
     if (!email || !password) {
       throw new UnauthorizedException('Missing params');
@@ -63,11 +62,20 @@ export class AuthService {
         throw new UnauthorizedException('Invalid role');
       }
 
-      const signedJwt = this.jwtService.sign({
-        user_email: fullUserInfo.email,
-        user_id: fullUserInfo.id,
-        user_auth: role_auth.auth_list.auth,
-      });
+      const signedJwt = this.jwtService.sign(
+        {
+          user_email: fullUserInfo.email,
+          user_id: fullUserInfo.id,
+          user_auth: role_auth.auth_list.auth,
+          user_data: {
+            first_name: fullUserInfo['first_name'],
+            last_name: fullUserInfo['last_name'],
+          },
+        },
+        {
+          expiresIn: '7d',
+        },
+      );
 
       await this.knex('user_credential')
         .where({ email: fullUserInfo.email })
@@ -77,16 +85,42 @@ export class AuthService {
 
       return {
         access_token: signedJwt,
-        user_data: {
-          first_name: fullUserInfo['first_name'],
-          last_name: fullUserInfo['last_name'],
-        },
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
       throw new InternalServerErrorException('Login failed');
+    }
+  }
+
+  async logout(token: string): Promise<{
+    message: string;
+  }> {
+    if (!token) throw new UnauthorizedException('Missing params');
+    try {
+      const decodedToken = this.jwtService.decode(token);
+      if (
+        !decodedToken ||
+        decodedToken.exp < Date.now() / 1000 ||
+        !decodedToken.user_email
+      )
+        throw new UnauthorizedException('Invalid token');
+      const user = await this.knex('user_credential')
+        .select({ email: 'email', deleted: 'deleted' })
+        .where({ email: decodedToken.user_email })
+        .first();
+      if (!user || user.deleted)
+        throw new UnauthorizedException('Forged token');
+
+      return {
+        message: 'Logout successful',
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Logout failed');
     }
   }
 }

@@ -13,6 +13,7 @@ export type LoginRequest = {
 export type LoginResponse = {
   access_token: string
   user_data: BasicUserInfo
+  auth_level: string
 }
 
 export type SignupRequest = {
@@ -22,6 +23,14 @@ export type SignupRequest = {
 }
 
 export type SignupResponse = {
+  message: string
+}
+
+export type LogoutRequest = {
+  token: string
+}
+
+export type LogoutResponse = {
   message: string
 }
 

@@ -217,3 +217,12 @@ export class LogUserDto extends PickType(UserCommonPropsDto, [
   @IsString()
   password: string;
 }
+
+export class LogOutUserDto {
+  @ApiProperty({
+    description: '[USERS - ALL] User token',
+  })
+  @IsNotEmpty()
+  @IsString()
+  token: string;
+}

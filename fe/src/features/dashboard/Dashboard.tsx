@@ -1,10 +1,18 @@
+// #region [Type Imports]
 import { type JSX } from "react";
+// #endregion [Type Imports]
+
+// #region [Style Imports]
+// #endregion [Style Imports]
+
+// #region [Library Imports]
+import { Topbar } from "@/features/topbar/Topbar";
+// #endregion [Library Imports]
 
 export const Dashboard = (): JSX.Element => {
     return (
-        <div>
-            <h1>Dashboard</h1>
-            <p>Benvenuto nella dashboard! Qui puoi visualizzare le informazioni del paziente e gestire le tue attività.</p>
-        </div>
+        <>
+            <Topbar />
+        </>
     )
 }
