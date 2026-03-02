@@ -1,5 +1,5 @@
 // #region [Type Imports]
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 // #endregion [Type Imports]
 
 // #region [Style Imports]
@@ -18,6 +18,8 @@ export const Dashboard = (): JSX.Element => {
     // #endregion [Helpers and utils]
 
     // #region [Redux State]
+    const innerRef = useRef<HTMLDivElement>(null);
+    const outerRef = useRef<HTMLDivElement>(null);
     // #endRegion [Redux State]
 
     // #region [Local State]
@@ -28,23 +30,20 @@ export const Dashboard = (): JSX.Element => {
     // #endRegion [Constants]
 
     // #region [UI Logic]
-    useEffect(() => {
-        console.log('==================== selectedComponent: ', selectedComponent)
-    }, [selectedComponent])
     // #endRegion [UI Logic]
 
     // #region [Render]
     return (
         <>
             <Stack>
-                <VStack>
+                <VStack style={{ overflow: 'hidden' }}>
                     <Topbar />
                     <AbsoluteCenter>
-                        <Grid>
-                            <HStack>
+                        <Grid className={selectedComponent ? styles.collapsedGrid : ''}>
+                            <HStack gap="20">
                                 <GridItem>
                                     <Box
-                                        className={styles.componentCard}
+                                        className={`${styles.componentCard}${selectedComponent ? ' ' + styles.collapsedCard : ''}`}
                                         bg="bg.emphasized"
                                         px="4"
                                         py="2"
@@ -55,17 +54,26 @@ export const Dashboard = (): JSX.Element => {
                                     >
                                         <Stack>
                                             <VStack>
-                                                <span>I miei appuntamenti</span>
-                                                <Icon size="lg" color="cyan">
-                                                    <FaCalendar />
-                                                </Icon>
+                                                <div className={`${styles.iconWrapper}${selectedComponent === "appointments" ? ' ' + styles.iconWrapperSelected : ''}`}>
+                                                    <Icon boxSize="12">
+                                                        <FaCalendar />
+                                                    </Icon>
+                                                </div>
+                                                <div className={`${styles.labelWrapper}${selectedComponent ? ' ' + styles.hiddenLabelWrapper : ''}`}>
+                                                    <Box
+                                                        className={styles.labelFormatting}
+                                                        transition="visibility 0.3s ease"
+                                                    >
+                                                        <span>I miei appuntamenti</span>
+                                                    </Box>
+                                                </div>
                                             </VStack>
                                         </Stack>
                                     </Box>
                                 </GridItem>
                                 <GridItem>
                                     <Box
-                                        className={styles.componentCard}
+                                        className={`${styles.componentCard}${selectedComponent ? ' ' + styles.collapsedCard : ''}`}
                                         bg="bg.emphasized"
                                         px="4"
                                         py="2"
@@ -76,17 +84,26 @@ export const Dashboard = (): JSX.Element => {
                                     >
                                         <Stack>
                                             <VStack>
-                                                <span>Trova uno specialista</span>
-                                                <Icon size="lg" color="cyan">
-                                                    <FaUserMd />
-                                                </Icon>
+                                                <div className={`${styles.iconWrapper}${selectedComponent === "specialists" ? ' ' + styles.iconWrapperSelected : ''}`}>
+                                                    <Icon boxSize="12">
+                                                        <FaUserMd />
+                                                    </Icon>
+                                                </div>
+                                                <div className={`${styles.labelWrapper}${selectedComponent ? ' ' + styles.hiddenLabelWrapper : ''}`}>
+                                                    <Box
+                                                        className={styles.labelFormatting}
+                                                        transition="visibility 0.3s ease"
+                                                    >
+                                                        <span>Trova uno specialista</span>
+                                                    </Box>
+                                                </div>
                                             </VStack>
                                         </Stack>
                                     </Box>
                                 </GridItem>
                                 <GridItem>
                                     <Box
-                                        className={styles.componentCard}
+                                        className={`${styles.componentCard}${selectedComponent ? ' ' + styles.collapsedCard : ''}`}
                                         bg="bg.emphasized"
                                         px="4"
                                         py="2"
@@ -97,10 +114,19 @@ export const Dashboard = (): JSX.Element => {
                                     >
                                         <Stack>
                                             <VStack>
-                                                <span>I miei referti</span>
-                                                <Icon size="lg" color="cyan">
-                                                    <FaFileAlt />
-                                                </Icon>
+                                                <div className={`${styles.iconWrapper}${selectedComponent === "reports" ? ' ' + styles.iconWrapperSelected : ''}`}>
+                                                    <Icon boxSize="12">
+                                                        <FaFileAlt />
+                                                    </Icon>
+                                                </div>
+                                                <div className={`${styles.labelWrapper}${selectedComponent ? ' ' + styles.hiddenLabelWrapper : ''}`}>
+                                                    <Box
+                                                        className={styles.labelFormatting}
+                                                        transition="visibility 0.3s ease"
+                                                    >
+                                                        <span>I miei referti</span>
+                                                    </Box>
+                                                </div>
                                             </VStack>
                                         </Stack>
                                     </Box>
@@ -108,6 +134,23 @@ export const Dashboard = (): JSX.Element => {
                             </HStack>
                         </Grid>
                     </AbsoluteCenter>
+                    <Box
+                        position="fixed"
+                        bottom="2.5vh"
+                        left="2.5vw"
+                        height="83vh"
+                        width="95vw"
+                        bg="bg.emphasized"
+                        borderRadius="md"
+                        boxShadow="md"
+                        color="fg"
+                        transform={selectedComponent ? 'translateY(0vh)' : 'translateY(100vh)'}
+                        transition="transform 1.4s ease, opacity 1.4s ease"
+                        zIndex="5"
+                        padding="20px"
+                    >
+                        <span> Test content</span>
+                    </Box>
                 </VStack>
             </Stack>
         </>

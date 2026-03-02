@@ -1,4 +1,50 @@
 .componentCard {
     min-height: 200px;
     min-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 
+        min-height 1.4s ease, 
+        min-width 1.4s ease,
+        width 1.4s ease,
+        height 1.4s ease;
+}
+
+.labelFormatting {
+    font-weight: bold;
+}
+
+.labelWrapper {
+    max-height: 100px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.4s, opacity 0.3s ease;
+}
+
+.hiddenLabelWrapper {
+    max-height: 0;
+    opacity: 0;
+}
+
+.collapsedGrid {
+    transform: translateY(-44vh);
+    transition: transform 1.4s ease;
+}
+
+.collapsedCard {
+    min-width: 80px;
+    min-height: 80px;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+}
+
+.iconWrapper {
+    color: cyan;
+    transition: color 0.3s ease;
+}
+
+.iconWrapperSelected {
+    color: #F56565;
 }
