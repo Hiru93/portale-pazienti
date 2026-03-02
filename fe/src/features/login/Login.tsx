@@ -5,7 +5,6 @@ import { type BasicErrorMessages, type SignupForm } from "@/app/types"
 // #endregion [Type Imports]
 
 // #region [Style Imports]
-import styles from "./Login.module.css"
 // #endregion [Style Imports]
 
 // #region [Library Imports]
@@ -191,12 +190,6 @@ export const Login = (): JSX.Element => {
         observer.observe(inner)
 
         return () => { observer.disconnect() }
-    }, [])
-
-    // Add gradient background class to body on mount and remove it on unmount
-    useEffect(() => {
-        document.body.classList.add(styles['gradient-background'])
-        return () => { document.body.classList.remove(styles['gradient-background']) }
     }, [])
 
     // Animation block that allows the logo to self draw on component mount and every time we switch back from the signup form to the login form
@@ -583,7 +576,7 @@ export const Login = (): JSX.Element => {
                                         <Button
                                             colorPalette="cyan"
                                             variant="ghost"
-                                            spinner={<BeatLoader size="xs" color="white" />}
+                                            spinner={<BeatLoader size="xs" color="cyan" />}
                                             onClick={() => {
                                                 handleUserCreation()
                                             }}
