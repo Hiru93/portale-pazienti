@@ -62,6 +62,13 @@ export class AuthService {
         throw new UnauthorizedException('Invalid role');
       }
 
+      const availableComponents = await this.knex('component')
+        .select('id', 'name', 'label', 'icon', 'path', 'order')
+        .whereRaw(
+          'EXISTS (SELECT 1 FROM jsonb_array_elements_text(roles) r WHERE r.value::int = ANY(?))',
+          [[fullUserInfo.id_role]], // double-wrap: outer array = bindings list, inner = the pg array value
+        );
+
       const signedJwt = this.jwtService.sign(
         {
           user_email: fullUserInfo.email,
@@ -71,6 +78,7 @@ export class AuthService {
             first_name: fullUserInfo['first_name'],
             last_name: fullUserInfo['last_name'],
           },
+          available_components: availableComponents,
         },
         {
           expiresIn: '7d',
