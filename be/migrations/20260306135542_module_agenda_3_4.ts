@@ -3,7 +3,7 @@ import type { Knex } from 'knex';
 export async function up(knex: Knex): Promise<void> {
   const roles = await knex<{ id: number }>('role')
     .select('id')
-    .whereIn('id', [3, 4]);
+    .whereIn('id', [1, 3, 4]);
 
   await knex('component').insert({
     name: 'agenda',
