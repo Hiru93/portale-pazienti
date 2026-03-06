@@ -63,7 +63,7 @@ export class AuthService {
       }
 
       const availableComponents = await this.knex('component')
-        .select('id', 'name')
+        .select('id', 'name', 'label', 'icon', 'path', 'order')
         .whereRaw(
           'EXISTS (SELECT 1 FROM jsonb_array_elements_text(roles) r WHERE r.value::int = ANY(?))',
           [[fullUserInfo.id_role]], // double-wrap: outer array = bindings list, inner = the pg array value
