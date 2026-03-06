@@ -8,6 +8,7 @@ import type {
   LogoutResponse,
   SignupRequest,
   SignupResponse,
+  DashboardComponent,
 } from "@/app/types"
 import { createAppSlice } from "../../app/createAppSlice"
 import { doLogin, doLogout, doSignup } from "./LoginAPI"
@@ -19,6 +20,7 @@ export type LoginSliceState = {
   logoutStatus: "idle" | "loading" | "success" | "failed"
   authToken: string | null
   authLevel: string[] | null
+  availableComponents: DashboardComponent[] | null
   userInfo: BasicUserInfo | null
 }
 
@@ -30,6 +32,9 @@ const initialState: LoginSliceState = {
   logoutStatus: "idle",
   authToken: initialTokenValue,
   authLevel: initialTokenValue ? tokenParse(initialTokenValue).user_auth : null,
+  availableComponents: initialTokenValue
+    ? tokenParse(initialTokenValue).available_components
+    : null,
   userInfo: initialTokenValue ? tokenParse(initialTokenValue).user_data : null,
 }
 
@@ -65,6 +70,7 @@ export const loginSlice = createAppSlice({
           const parsedToken = tokenParse(state.authToken ?? "")
           state.authLevel = parsedToken.user_auth
           state.userInfo = parsedToken.user_data
+          state.availableComponents = parsedToken.available_components
         },
         rejected: state => {
           console.error("Login failed")
@@ -132,10 +138,12 @@ export const loginSlice = createAppSlice({
     selectLogoutStatus: state => state.logoutStatus,
     selectUserInfo: state => state.userInfo,
     selectAuthLevel: state => state.authLevel,
+    selectAvailableComponents: state => state.availableComponents,
   },
 })
 
-export const { loginUser, signupUser, logoutUser, resetStatus } = loginSlice.actions
+export const { loginUser, signupUser, logoutUser, resetStatus } =
+  loginSlice.actions
 
 export const {
   selectAuthToken,
@@ -144,4 +152,5 @@ export const {
   selectLogoutStatus,
   selectUserInfo,
   selectAuthLevel,
+  selectAvailableComponents,
 } = loginSlice.selectors
