@@ -7,7 +7,8 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex('component').insert({
     name: 'profile',
-    description: 'Allows each level of user auth to manage their user information',
+    description:
+      'Allows each level of user auth to manage their user information',
     roles: JSON.stringify(roles.map(r => r.id)),
   });
 }
