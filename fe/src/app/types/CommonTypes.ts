@@ -96,6 +96,5 @@ export type DashboardComponent = {
   name: string,
   label: string,
   icon: string,
-  path: string,
   order: number
 }
