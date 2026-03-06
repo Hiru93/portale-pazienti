@@ -14,6 +14,7 @@ export type DecodedToken = {
     first_name: string,
     last_name: string,
   }
+  available_components: DashboardComponent[]
 }
 
 export type BaseResponse<T> = {
@@ -88,4 +89,13 @@ export type FormField = {
   value?: string
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   options?: { value: string; label: string }[]
+}
+
+export type DashboardComponent = {
+  id: string,
+  name: string,
+  label: string,
+  icon: string,
+  path: string,
+  order: number
 }

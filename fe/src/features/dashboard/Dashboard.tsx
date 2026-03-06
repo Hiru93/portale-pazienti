@@ -1,5 +1,6 @@
 // #region [Type Imports]
-import { useEffect, useRef, useState, type JSX } from "react";
+import { useState, type JSX } from "react";
+import { type DashboardComponent } from "@/app/types";
 // #endregion [Type Imports]
 
 // #region [Style Imports]
@@ -7,9 +8,11 @@ import styles from "./Dashboard.module.css";
 // #endregion [Style Imports]
 
 // #region [Library Imports]
-import { FaCalendar, FaUserMd, FaFileAlt } from "react-icons/fa";
+import { useAppSelector } from "@/app/hooks";
+import { FaCalendar, FaUserMd, FaFileAlt, FaCommentMedical } from "react-icons/fa";
 import { Topbar } from "@/features/topbar/Topbar";
 import { AbsoluteCenter, Box, Grid, GridItem, Stack, VStack, HStack, Icon } from "@chakra-ui/react";
+import { selectAvailableComponents } from "../login/LoginSlice";
 // #endregion [Library Imports]
 
 export const Dashboard = (): JSX.Element => {
@@ -18,15 +21,19 @@ export const Dashboard = (): JSX.Element => {
     // #endregion [Helpers and utils]
 
     // #region [Redux State]
-    const innerRef = useRef<HTMLDivElement>(null);
-    const outerRef = useRef<HTMLDivElement>(null);
+    const components = useAppSelector(selectAvailableComponents)
     // #endRegion [Redux State]
 
     // #region [Local State]
-    const [selectedComponent, setSelectedComponent] = useState<string | null>(null)
+    const [selectedComponent, setSelectedComponent] = useState<DashboardComponent | null>(null)
     // #endRegion [Local State]
 
     // #region [Constants]
+    const iconMap: Record<string, JSX.Element> = {
+        FaCalendar: <FaCalendar />,
+        FaUserMd: <FaUserMd />,
+        FaFileAlt: <FaFileAlt />
+    };
     // #endRegion [Constants]
 
     // #region [UI Logic]
@@ -41,96 +48,38 @@ export const Dashboard = (): JSX.Element => {
                     <AbsoluteCenter>
                         <Grid className={selectedComponent ? styles.collapsedGrid : ''}>
                             <HStack gap="20">
-                                <GridItem>
-                                    <Box
-                                        className={`${styles.componentCard}${selectedComponent ? ' ' + styles.collapsedCard : ''}`}
-                                        bg="bg.emphasized"
-                                        px="4"
-                                        py="2"
-                                        borderRadius="md"
-                                        boxShadow="md"
-                                        color="fg"
-                                        onClick={() => { setSelectedComponent("appointments") }}
-                                    >
-                                        <Stack>
-                                            <VStack>
-                                                <div className={`${styles.iconWrapper}${selectedComponent === "appointments" ? ' ' + styles.iconWrapperSelected : ''}`}>
-                                                    <Icon boxSize="12">
-                                                        <FaCalendar />
-                                                    </Icon>
-                                                </div>
-                                                <div className={`${styles.labelWrapper}${selectedComponent ? ' ' + styles.hiddenLabelWrapper : ''}`}>
-                                                    <Box
-                                                        className={styles.labelFormatting}
-                                                        transition="visibility 0.3s ease"
-                                                    >
-                                                        <span>I miei appuntamenti</span>
-                                                    </Box>
-                                                </div>
-                                            </VStack>
-                                        </Stack>
-                                    </Box>
-                                </GridItem>
-                                <GridItem>
-                                    <Box
-                                        className={`${styles.componentCard}${selectedComponent ? ' ' + styles.collapsedCard : ''}`}
-                                        bg="bg.emphasized"
-                                        px="4"
-                                        py="2"
-                                        borderRadius="md"
-                                        boxShadow="md"
-                                        color="fg"
-                                        onClick={() => { setSelectedComponent("specialists") }}
-                                    >
-                                        <Stack>
-                                            <VStack>
-                                                <div className={`${styles.iconWrapper}${selectedComponent === "specialists" ? ' ' + styles.iconWrapperSelected : ''}`}>
-                                                    <Icon boxSize="12">
-                                                        <FaUserMd />
-                                                    </Icon>
-                                                </div>
-                                                <div className={`${styles.labelWrapper}${selectedComponent ? ' ' + styles.hiddenLabelWrapper : ''}`}>
-                                                    <Box
-                                                        className={styles.labelFormatting}
-                                                        transition="visibility 0.3s ease"
-                                                    >
-                                                        <span>Trova uno specialista</span>
-                                                    </Box>
-                                                </div>
-                                            </VStack>
-                                        </Stack>
-                                    </Box>
-                                </GridItem>
-                                <GridItem>
-                                    <Box
-                                        className={`${styles.componentCard}${selectedComponent ? ' ' + styles.collapsedCard : ''}`}
-                                        bg="bg.emphasized"
-                                        px="4"
-                                        py="2"
-                                        borderRadius="md"
-                                        boxShadow="md"
-                                        color="fg"
-                                        onClick={() => { setSelectedComponent("reports") }}
-                                    >
-                                        <Stack>
-                                            <VStack>
-                                                <div className={`${styles.iconWrapper}${selectedComponent === "reports" ? ' ' + styles.iconWrapperSelected : ''}`}>
-                                                    <Icon boxSize="12">
-                                                        <FaFileAlt />
-                                                    </Icon>
-                                                </div>
-                                                <div className={`${styles.labelWrapper}${selectedComponent ? ' ' + styles.hiddenLabelWrapper : ''}`}>
-                                                    <Box
-                                                        className={styles.labelFormatting}
-                                                        transition="visibility 0.3s ease"
-                                                    >
-                                                        <span>I miei referti</span>
-                                                    </Box>
-                                                </div>
-                                            </VStack>
-                                        </Stack>
-                                    </Box>
-                                </GridItem>
+                                {components?.map((component: DashboardComponent, index: number) => (
+                                    <GridItem key={index}>
+                                        <Box
+                                            className={`${styles.componentCard}${selectedComponent ? ' ' + styles.collapsedCard : ''}`}
+                                            bg="bg.emphasized"
+                                            px="4"
+                                            py="2"
+                                            borderRadius="md"
+                                            boxShadow="md"
+                                            color="fg"
+                                            onClick={() => { setSelectedComponent(component) }}
+                                        >
+                                            <Stack>
+                                                <VStack>
+                                                    <div className={`${styles.iconWrapper}${selectedComponent?.id === component.id ? ' ' + styles.iconWrapperSelected : ''}`}>
+                                                        <Icon boxSize="12">
+                                                            {iconMap[component.icon] ?? <FaCommentMedical />}
+                                                        </Icon>
+                                                    </div>
+                                                    <div className={`${styles.labelWrapper}${selectedComponent ? ' ' + styles.hiddenLabelWrapper : ''}`}>
+                                                        <Box
+                                                            className={styles.labelFormatting}
+                                                            transition="visibility 0.3s ease"
+                                                        >
+                                                            <span>{component.label}</span>
+                                                        </Box>
+                                                    </div>
+                                                </VStack>
+                                            </Stack>
+                                        </Box>
+                                    </GridItem>
+                                ))}
                             </HStack>
                         </Grid>
                     </AbsoluteCenter>
@@ -149,7 +98,10 @@ export const Dashboard = (): JSX.Element => {
                         zIndex="5"
                         padding="20px"
                     >
-                        <span> Test content</span>
+                        <span>id: {selectedComponent?.id}</span><br />
+                        <span>name: {selectedComponent?.name}</span><br />
+                        <span>label: {selectedComponent?.label}</span><br />
+                        <span>icon: {selectedComponent?.icon}</span><br />
                     </Box>
                 </VStack>
             </Stack>
