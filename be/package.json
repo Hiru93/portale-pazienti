@@ -22,7 +22,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migration:generate": "npx knex migrate:make",
     "migration:status": "npx knex migrate:status",
-    "migration:migrate": "npx knex migrate:latest"
+    "migration:migrate": "npx knex migrate:latest",
+    "new-module": "cd ./scripts && ./module-creation.sh"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
