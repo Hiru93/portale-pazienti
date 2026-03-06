@@ -59,14 +59,20 @@ read -p "Module description: " module_description
 # Sanitize description: keep only alphanumeric characters and spaces
 module_description=$(echo "$module_description" | tr -cd '[:alnum:] ')
 
-echo "Auth levels:"
-echo "1 - Ghost"
-echo "2 - Operator"
-echo "3 - Patient"
-echo "4 - Specialist"
+echo "┌───────────────────────────────────────────────────────────────────┐"
+echo "│                       MODULE NAMING RULES                         │"
+echo "├───────────────────────────────────────────────────────────────────┤"
+echo "│  Auth levels:                                                     │"
+echo "│    2 - Operator                                                   │"
+echo "│    3 - Patient                                                    │"
+echo "│    4 - Specialist                                                 │"
+echo "│                                                                   │"
+echo "│  Ghost users with auth level 1 have default access to all modules │"
+echo "└───────────────────────────────────────────────────────────────────┘"
+
 
 while true; do
-    read -p "Enter the auth levels required [1-4, space-separated]: " -a module_auth_level
+    read -p "Enter the auth levels required [2-4, space-separated]: " -a module_auth_level
 
     if [ ${#module_auth_level[@]} -eq 0 ]; then
         echo "Please enter at least one auth level."
@@ -76,9 +82,9 @@ while true; do
     valid=true
     for level in "${module_auth_level[@]}"; do
         case $level in
-            1|2|3|4) ;;
+            2|3|4) ;;
             *)
-                echo "Invalid auth level '$level'. Please enter numbers between 1 and 4."
+                echo "Invalid auth level '$level'. Please enter numbers between 2 and 4."
                 valid=false
                 break
                 ;;
@@ -116,7 +122,7 @@ import type { Knex } from 'knex';
 export async function up(knex: Knex): Promise<void> {
   const roles = await knex<{ id: number }>('role')
     .select('id')
-    .whereIn('id', [${levels_csv}]);
+    .whereIn('id', [1, ${levels_csv}]);
 
   await knex('component').insert({
     name: '${module_name}',
