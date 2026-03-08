@@ -2,11 +2,14 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { Provider } from "react-redux"
 import { Provider as ChakraProvider } from "./components/ui/provider"
+import { setupInterceptors } from "./utils/axiosInterceptor"
 // Pages
 import { App } from "./App"
 
 import { store } from "./app/store"
 import "./index.css"
+
+setupInterceptors(store)
 
 const container = document.getElementById("root")
 

@@ -9,7 +9,7 @@ import { useEffect, type JSX } from "react";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import {
     logoutUser,
-    selectAuthToken,
+    selectAccessToken,
     selectLogoutStatus,
     selectUserInfo,
 } from "@/features/login/LoginSlice"
@@ -28,13 +28,13 @@ export const Topbar = (): JSX.Element => {
     // #region [Redux State]
     const userInfo = useAppSelector(selectUserInfo);
     const logoutStatus = useAppSelector(selectLogoutStatus);
-    const userToken = useAppSelector(selectAuthToken);
+    const accessToken = useAppSelector(selectAccessToken);
     // #endRegion [Redux State]
 
     // #region [Local State]
     useEffect(() => {
-        if (!userToken) void navigate("/")
-    }, [userToken])
+        if (!accessToken) void navigate("/")
+    }, [accessToken])
     useEffect(() => {
         if (logoutStatus === "success") void navigate("/")
     }, [logoutStatus])
@@ -45,7 +45,7 @@ export const Topbar = (): JSX.Element => {
 
     // #region [UI Logic]
     const handleLogout = () => {
-        void dispatch(logoutUser({ token: userToken ?? "" }))
+        void dispatch(logoutUser({ token: accessToken ?? "" }))
     }
     // #endRegion [UI Logic]
 
