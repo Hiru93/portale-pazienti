@@ -5,16 +5,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { jwtConstants } from '../constants/constants';
 import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './auth.decorator';
+import { ConfigService } from '@nestjs/config';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
+    private redisService: RedisService,
     private reflector: Reflector,
+    private configService: ConfigService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,10 +34,15 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException();
     }
+    const isBlockedToken = await this.redisService.get(`blockList:${token}`);
+    if (isBlockedToken) {
+      throw new UnauthorizedException('Token is blocked');
+    }
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: jwtConstants.secret,
+        secret: this.configService.get<string>('PP_BE_SECRET'),
       });
+
       request['users'] = payload;
     } catch (error) {
       throw new UnauthorizedException(error);

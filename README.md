@@ -28,10 +28,13 @@ The project is a monorepo with two main directories:
 | NestJS 11 | REST API framework |
 | PostgreSQL 14 | Database |
 | Knex | Query builder & migrations |
-| JWT | Authentication |
+| JWT | Authentication (access tokens) |
+| Redis 7 | Session store & token blocklist |
+| ioredis | Redis client for Node.js |
 | bcrypt | Password hashing |
+| cookie-parser | HTTP-only cookie handling |
 | Swagger | API documentation |
-| Docker Compose | Local database & backend containerization |
+| Docker Compose | Local infrastructure containerization |
 
 ### Frontend stack
 
@@ -57,7 +60,8 @@ portale-pazienti/
 │   ├── scripts/
 │   │   └── db-start.sh         # Start DB + run migrations
 │   ├── src/
-│   │   ├── auth/               # Authentication module (JWT)
+│   │   ├── auth/               # Authentication module (JWT + sessions)
+│   │   ├── redis/              # Redis module (client, service, constants)
 │   │   ├── users/              # User management module
 │   │   ├── commons/            # Shared module
 │   │   ├── dtos/               # Data transfer objects
@@ -72,11 +76,11 @@ portale-pazienti/
 ├── fe/                         # Frontend
 │   ├── src/
 │   │   ├── app/                # Redux store, hooks, types
-│   │   ├── features/           # Feature modules (login, etc.)
+│   │   ├── features/           # Feature modules (login, topbar, etc.)
 │   │   ├── components/         # Shared UI components
-│   │   ├── utils/              # Utilities & constants
+│   │   ├── utils/              # apiClient, axiosInterceptor, helpers
 │   │   ├── App.tsx             # Router configuration
-│   │   └── main.tsx            # Entry point
+│   │   └── main.tsx            # Entry point (interceptors bootstrap)
 │   ├── index.html              # HTML template
 │   └── vite.config.ts          # Vite configuration
 └── .gitignore
@@ -181,6 +185,8 @@ docker-compose up --build
 Services:
 - **db** — PostgreSQL 14, internal port 5432, exposed on **5433**
 - **be** — NestJS API, exposed on **3000**
+- **redis** — Redis 7 (Alpine), exposed on **6379** — session store and token blocklist
+- **redis-commander** — Web UI for Redis inspection, exposed on **8081**
 
 ## Environment variables
 
@@ -194,6 +200,156 @@ The backend uses a `.env` file in `be/` with the following variables:
 | `PP_PG_PASS` | PostgreSQL password |
 | `PP_PG_HOST` | PostgreSQL host (`localhost` for local, `db` in Docker) |
 | `PP_PG_PORT` | PostgreSQL port (`5433` local, `5432` in Docker) |
-| `PP_BE_SECRET` | JWT secret |
+| `PP_BE_SECRET` | JWT signing secret |
 | `PP_BE_SALT` | Bcrypt salt |
 | `PP_SALT_RNDS` | Bcrypt salt rounds |
+| `PP_REDIS_HOST` | Redis host (`localhost` for local, `redis` in Docker) |
+| `PP_REDIS_PORT` | Redis port (default `6379`) |
+| `PP_REDIS_PASS` | Redis password |
+
+---
+
+## Authentication & Token Management
+
+This section describes the full authentication flow: how JWT access tokens and refresh tokens are issued, cached in Redis, transported between frontend and backend, and invalidated on logout.
+
+### Overview
+
+The system uses a dual-token strategy:
+
+| Token | Lifetime | Storage (client) | Storage (server) |
+|---|---|---|---|
+| **Access token** (JWT) | 15 minutes | Redux state + `localStorage` | Verified via signature; blocklisted in Redis on logout |
+| **Refresh token** (opaque hex) | 7 days | HTTP-only cookie | Redis `session:${userId}` |
+
+### Redis data structures
+
+```
+# Active session — created on login, deleted on logout
+session:${userId}  →  { "refreshToken": "<64-char hex>", "payload": { ...jwtClaims } }
+TTL: 7 days
+
+# Blocklist — created on logout for the remaining lifetime of the access token
+blockList:${jwtToken}  →  "1"
+TTL: remaining seconds until token expiry (≤ 15 minutes)
+```
+
+Redis is configured with append-only persistence (`--appendonly yes`) and periodic snapshots so sessions survive container restarts.
+
+### Backend modules
+
+| File | Role |
+|---|---|
+| `be/src/redis/redis.module.ts` | Global NestJS module; creates the ioredis client from env vars and exposes `RedisService` |
+| `be/src/redis/redis.service.ts` | Thin wrapper with `set(key, value, ttl?)`, `get(key)`, `del(key)` |
+| `be/src/auth/auth.service.ts` | Business logic: login, refresh, logout |
+| `be/src/auth/auth.controller.ts` | HTTP endpoints: `POST /api/auth/login`, `/refresh`, `/logout` |
+| `be/src/auth/auth.guard.ts` | Global `APP_GUARD`; validates Bearer token and checks Redis blocklist on every request |
+
+### Frontend modules
+
+| File | Role |
+|---|---|
+| `fe/src/utils/apiClient.ts` | Axios instance with `baseURL` and `withCredentials: true` (enables automatic cookie transmission) |
+| `fe/src/utils/axiosInterceptor.ts` | Request interceptor injects `Authorization: Bearer` header; response interceptor handles 401s |
+| `fe/src/features/login/LoginSlice.ts` | Redux slice: `loginUser`, `logoutUser`, `refreshUser` thunks; token persisted in `localStorage` |
+| `fe/src/features/login/LoginAPI.ts` | Raw API calls: `doLogin`, `doLogout`, `doRefreshToken`, `doSignup` |
+| `fe/src/utils/utils.tsx` | `ProtectedRoute` component — validates JWT expiry and user permissions before rendering |
+
+### Login flow
+
+```
+User submits email/password → Login.tsx
+  ↓  dispatches loginUser()
+LoginAPI.doLogin() → POST /api/auth/login
+  ↓
+Backend (AuthService.login):
+  1. Validate credentials against DB (bcrypt compare)
+  2. Build JWT payload: user_id, user_email, user_auth, user_data, available_components
+  3. Sign JWT → access_token  (exp: 15 min)
+  4. Generate refresh_token   (crypto.randomBytes(32).hex)
+  5. Redis SET session:${userId} = { refreshToken, payload }  TTL 7 days
+  6. Set refresh_token in HTTP-only cookie  (sameSite: strict, maxAge: 7 days)
+  7. Return { access_token, refresh_token }
+  ↓
+Frontend (LoginSlice.fulfilled):
+  1. Store access_token in Redux + localStorage
+  2. Parse JWT claims → authLevel, userInfo, availableComponents
+  ↓
+Navigate to /dashboard
+```
+
+### Authenticated request flow
+
+```
+axios request interceptor
+  → adds Authorization: Bearer ${accessToken} from Redux
+  → cookie is sent automatically (withCredentials)
+  ↓
+Backend (AuthGuard):
+  1. Skip if @SkipAuth() decorator present
+  2. Extract Bearer token from Authorization header
+  3. Check Redis: blockList:${token} → reject if found
+  4. Verify JWT signature with PP_BE_SECRET
+  5. Attach decoded payload to request['users']
+  ↓
+Route handler executes
+```
+
+### Token refresh flow (automatic on 401)
+
+```
+API request returns 401 (access token expired)
+  ↓
+axiosInterceptor response handler:
+  1. Set _retry = true to prevent infinite loops
+  2. If another refresh is already in-flight → queue this request
+  3. Otherwise:
+     a. dispatches refreshUser(userId)
+        → LoginAPI.doRefreshToken(userId)
+        → POST /api/auth/refresh { userId }
+        → refresh_token read from HTTP-only cookie automatically
+     b. Backend (AuthService.refresh):
+          - GET session:${userId} from Redis
+          - Compare provided refresh_token with stored value
+          - Generate new refresh_token  (rotation)
+          - Update Redis session with new token
+          - Set new refresh_token cookie
+          - Sign new JWT → return { access_token }
+     c. LoginSlice.fulfilled → update Redux + localStorage
+     d. Flush queue: retry all pending requests with new token
+  4. Retry original request with new access_token
+```
+
+### Logout flow
+
+```
+User clicks logout → Topbar dispatches logoutUser()
+  ↓
+LoginAPI.doLogout({ token: accessToken })
+  → POST /api/auth/logout { token }
+  ↓
+Backend (AuthService.logout):
+  1. Decode token, validate user exists
+  2. Calculate remaining TTL from token exp
+  3. Redis SET blockList:${token} = "1"  TTL = remaining seconds
+  4. Redis DEL session:${userId}
+  5. Clear refresh_token cookie
+  ↓
+LoginSlice.fulfilled:
+  1. Clear accessToken from Redux + localStorage
+  2. Clear authLevel, userInfo, availableComponents
+  ↓
+Topbar watches logoutStatus → navigate to "/"
+ProtectedRoute redirects unauthenticated users to "/"
+```
+
+### Security properties
+
+- **Short-lived access tokens** — a stolen JWT is valid for at most 15 minutes.
+- **HTTP-only refresh cookie** — the refresh token is inaccessible to JavaScript, mitigating XSS.
+- **Server-side session** — logout is enforced server-side; the refresh token cannot be used after `DEL session:${userId}`.
+- **Token blocklist** — a logged-out (or revoked) access token is immediately blocked in Redis for its remaining lifetime, preventing reuse.
+- **Refresh token rotation** — every refresh issues a new token, limiting the window of a compromised refresh token.
+- **CSRF protection** — the refresh cookie uses `sameSite: strict`; CORS is locked to `localhost:5173`.
+- **Password hashing** — bcrypt with configurable salt rounds.
