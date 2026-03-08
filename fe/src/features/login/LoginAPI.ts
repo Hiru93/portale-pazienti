@@ -2,11 +2,12 @@ import { baseUrl } from "@/utils/constants"
 
 // #region [Type Imports]
 import type { BaseResponse } from "@/app/types/CommonTypes"
-import type { LoginRequest, LoginResponse, LogoutRequest, LogoutResponse, SignupRequest, SignupResponse } from "@/app/types";
+import type { AccessResponse, LoginRequest, LoginResponse, LogoutRequest, LogoutResponse, SignupRequest, SignupResponse } from "@/app/types";
 // #endregion [Type Imports]
 
 // #region [Library Imports]
 import axios from "axios"
+import apiClient from "@/utils/apiClient";
 // #endregion [Library Imports]
 
 const urlContextLogin = 'auth'
@@ -14,7 +15,7 @@ const urlContextUsers = 'users'
 
 export const doLogin = async (params: LoginRequest): Promise<BaseResponse<LoginResponse>> =>
   new Promise<BaseResponse<LoginResponse>>((resolve, reject) => {
-    axios
+    apiClient
       .post(`${baseUrl}/${urlContextLogin}/login`, params)
       .then((response: BaseResponse<LoginResponse>) => {
         console.log("Login response:", response)
@@ -41,12 +42,25 @@ export const doSignup = async (params: SignupRequest): Promise<BaseResponse<Sign
   })
 
 
-export const doLogout = async (params: LogoutRequest): Promise<BaseResponse<LogoutResponse>> => 
+export const doLogout = async (params: LogoutRequest): Promise<BaseResponse<LogoutResponse>> =>
   new Promise<BaseResponse<LogoutResponse>>((resolve, reject) => {
-    axios
+    apiClient
       .post(`${baseUrl}/${urlContextLogin}/logout`, params)
       .then((response: BaseResponse<LogoutResponse>) => {
         console.log("Logout response: ", response)
+        if (response.error) reject(new Error({message: response.error.error, code: response.error.code}.message))
+        resolve({ data: response.data })
+      })
+      .catch((error: unknown) => {
+        reject(error as Error)
+      })
+  })
+
+export const doRefreshToken = async (userId: string): Promise<BaseResponse<AccessResponse>> =>
+  new Promise<BaseResponse<AccessResponse>>((resolve, reject) => {
+    apiClient.post(`${baseUrl}/${urlContextLogin}/refresh`, { userId })
+      .then((response: BaseResponse<AccessResponse>) => {
+        console.log("Refresh token response: ", response)
         if (response.error) reject(new Error({message: response.error.error, code: response.error.code}.message))
         resolve({ data: response.data })
       })

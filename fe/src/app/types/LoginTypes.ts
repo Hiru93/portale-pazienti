@@ -11,9 +11,12 @@ export type LoginRequest = {
 }
 
 export type LoginResponse = {
-  access_token: string
-  user_data: BasicUserInfo
-  auth_level: string
+  access_token: string;
+  refresh_token: string;
+}
+
+export type AccessResponse = {
+  access_token: string;
 }
 
 export type SignupRequest = {

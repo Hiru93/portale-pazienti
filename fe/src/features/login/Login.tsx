@@ -15,7 +15,7 @@ import {
     loginUser,
     signupUser,
     resetStatus,
-    selectAuthToken,
+    selectAccessToken,
     selectLoginStatus,
     selectSignupStatus,
     selectUserInfo
@@ -58,7 +58,7 @@ export const Login = (): JSX.Element => {
     // #region [Redux State]
     const loginStatus = useAppSelector(selectLoginStatus)
     const signupStatus = useAppSelector(selectSignupStatus)
-    const authToken = useAppSelector(selectAuthToken)
+    const accessToken = useAppSelector(selectAccessToken)
     const userInfo = useAppSelector(selectUserInfo)
     // const { data: roles, isLoading: rolesLoading } = useGetRolesQuery(undefined)
     // #endregion [Redux State]
@@ -337,9 +337,9 @@ export const Login = (): JSX.Element => {
                     description: `Welcome back, ${userInfo.first_name} ${userInfo.last_name}!`
                 })
             })
-            if (authToken) void navigate("/dashboard")
+            if (accessToken) void navigate("/dashboard")
         }
-    }, [loginStatus, userInfo, authToken, navigate])
+    }, [loginStatus, userInfo, accessToken, navigate])
 
     const handleErrorMessages = (field: keyof typeof validationControls) => {
         return hasAttemptedSubmit && !validationControls[field] ? <Field.ErrorText>{errorMessages[field]}</Field.ErrorText> : null
