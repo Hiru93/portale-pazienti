@@ -6,12 +6,15 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Knex } from 'knex';
 import { InjectModel } from 'nest-knexjs';
+import { randomBytes } from 'crypto';
+import { RedisService } from 'src/redis/redis.service';
 import { compareHash } from 'src/utils/utils';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
+    private redisService: RedisService,
     @InjectModel() private readonly knex: Knex,
   ) {}
 
@@ -20,6 +23,7 @@ export class AuthService {
     password: string,
   ): Promise<{
     access_token: string;
+    refresh_token: string;
   }> {
     if (!email || !password) {
       throw new UnauthorizedException('Missing params');
@@ -81,9 +85,26 @@ export class AuthService {
           available_components: availableComponents,
         },
         {
-          expiresIn: '7d',
+          expiresIn: '15m',
         },
       );
+
+      const ttl = 7 * 24 * 60 * 60; // 7 days in seconds
+      const refreshToken = randomBytes(32).toString('hex');
+      const session = JSON.stringify({
+        refreshToken,
+        payload: {
+          user_email: fullUserInfo.email,
+          user_id: fullUserInfo.id,
+          user_auth: role_auth.auth_list.auth,
+          user_data: {
+            first_name: fullUserInfo['first_name'],
+            last_name: fullUserInfo['last_name'],
+          },
+          available_components: availableComponents,
+        },
+      });
+      await this.redisService.set(`session:${fullUserInfo.id}`, session, ttl);
 
       await this.knex('user_credential')
         .where({ email: fullUserInfo.email })
@@ -93,6 +114,7 @@ export class AuthService {
 
       return {
         access_token: signedJwt,
+        refresh_token: refreshToken,
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -115,11 +137,20 @@ export class AuthService {
       )
         throw new UnauthorizedException('Invalid token');
       const user = await this.knex('user_credential')
-        .select({ email: 'email', deleted: 'deleted' })
+        .select({ email: 'email', deleted: 'deleted', id: 'id' })
         .where({ email: decodedToken.user_email })
         .first();
       if (!user || user.deleted)
         throw new UnauthorizedException('Forged token');
+
+      const raminingTtl = Math.max(
+        0,
+        decodedToken.exp - Math.floor(Date.now() / 1000),
+      );
+      await Promise.all([
+        this.redisService.set(`blockList:${token}`, '1', raminingTtl),
+        this.redisService.del(`session:${user.id}`),
+      ]);
 
       return {
         message: 'Logout successful',
@@ -129,6 +160,43 @@ export class AuthService {
         throw error;
       }
       throw new InternalServerErrorException('Logout failed');
+    }
+  }
+
+  async refresh(
+    userId: string,
+    refresh_token: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    try {
+      if (!userId || !refresh_token)
+        throw new UnauthorizedException('Missing params');
+
+      const storedToken = await this.redisService.get(`session:${userId}`);
+
+      if (!storedToken) throw new UnauthorizedException('Session expired');
+
+      const { refreshToken, payload } = JSON.parse(storedToken);
+      if (refreshToken !== refresh_token)
+        throw new UnauthorizedException('Session expired');
+
+      const newRefreshToken = randomBytes(32).toString('hex');
+      const newSessionData = JSON.stringify({
+        refreshToken: newRefreshToken,
+        payload: payload,
+      });
+      await this.redisService.set(
+        `session:${userId}`,
+        newSessionData,
+        7 * 24 * 60 * 60,
+      ); // 7 days
+
+      const newAccessToken = this.jwtService.sign(payload, {
+        expiresIn: '15m',
+      });
+      return { access_token: newAccessToken, refresh_token: newRefreshToken };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      throw new InternalServerErrorException('Refresh token failed');
     }
   }
 }

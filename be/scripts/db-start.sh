@@ -14,7 +14,13 @@ until docker ps | grep -q "pp_db"; do
   sleep 1
 done
 
-# Once the database is ready, we'll check if there are any migrations to run
+# Wait for redis service to be ready
+until docker ps | grep -q "pp_redis"; do
+  echo "Waiting for redis to be ready..."
+  sleep 1
+done
+
+# Once both the database and redis are ready, we'll check if there are any migrations to run
 if npx knex migrate:status | grep -q "Pending Migration"; then
   echo "Running migrations..."
   npx knex migrate:latest

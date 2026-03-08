@@ -1,7 +1,16 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { SkipAuth } from './auth.decorator';
-import { LogOutUserDto, LogUserDto } from 'src/dtos/users';
+import { LogOutUserDto, LogUserDto, RefreshUserDto } from 'src/dtos/users';
 import { ApiBody } from '@nestjs/swagger';
 import { userDefaultDataDTO } from 'src/constants/constants';
 
@@ -15,9 +24,19 @@ export class AuthController {
   @ApiBody({ type: LogUserDto, examples: userDefaultDataDTO.login })
   async login(
     @Body() userInfo: LogUserDto,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<ReturnType<AuthService['login']>> {
     const { email, password } = userInfo;
-    return this.authService.login(email, password);
+    const { access_token, refresh_token } = await this.authService.login(
+      email,
+      password,
+    );
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    return { access_token, refresh_token };
   }
 
   @SkipAuth()
@@ -26,8 +45,31 @@ export class AuthController {
   @ApiBody({ type: LogOutUserDto, examples: userDefaultDataDTO.logout })
   async logout(
     @Body() params: LogOutUserDto,
-  ): Promise<ReturnType<AuthService['logout']>> {
-    const { token } = params;
-    return this.authService.logout(token);
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    res.clearCookie('refresh_token');
+    return this.authService.logout(params.token);
+  }
+
+  @SkipAuth()
+  @HttpCode(HttpStatus.OK)
+  @Post('refresh')
+  @ApiBody({ type: RefreshUserDto, examples: userDefaultDataDTO.refresh })
+  async refresh(
+    @Body() params: RefreshUserDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies['refresh_token'];
+    const { access_token, refresh_token } = await this.authService.refresh(
+      params.userId,
+      refreshToken,
+    );
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    return { access_token };
   }
 }

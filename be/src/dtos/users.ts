@@ -226,3 +226,12 @@ export class LogOutUserDto {
   @IsString()
   token: string;
 }
+
+export class RefreshUserDto {
+  @ApiProperty({
+    description: '[USERS - ALL] User ID',
+  })
+  @IsNotEmpty()
+  @IsString()
+  userId: string;
+}
