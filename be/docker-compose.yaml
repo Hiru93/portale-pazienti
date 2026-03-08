@@ -16,6 +16,35 @@ services:
     networks:
       - default
     restart: on-failure:3
+
+  redis:
+    image: 'redis:7-alpine'
+    container_name: ${PP_REDIS_CONTAINER_NAME}
+    networks:
+      - default
+    restart: on-failure:3
+    ports:
+      - '${PP_REDIS_PORT}:6379'
+    volumes:
+      - pp-redis-volume:/data
+    command: >
+      redis-server 
+      --requirepass ${PP_REDIS_PASS} 
+      --save 900 1 
+      --save 300 10 
+      --appendonly yes
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ${PP_REDIS_COMMANDER_CONTAINER_NAME}
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${PP_REDIS_PASS}
+    ports:
+      - ${PP_REDIS_COMMANDER_PORT}:8081
+    depends_on:
+      - redis
+    networks:
+      - default
+    restart: on-failure:3
   be:
     build:
       context: .
@@ -32,10 +61,14 @@ services:
       PP_PG_PASS: ${PP_PG_PASS}
       PP_PG_DB: ${PP_PG_DB}
       PP_PG_PORT: 5432
+      PP_REDIS_HOST: redis
+      PP_REDIS_PORT: ${PP_REDIS_PORT}
+      PP_REDIS_PASS: ${PP_REDIS_PASS}
     ports:
       - 3000:3000
     depends_on:
       - db
+      - redis
     networks:
       - default
     restart: on-failure:3
@@ -43,6 +76,8 @@ services:
 volumes:
   pp-db-volume:
     name: pp-db-volume
+  pp-redis-volume:
+    name: pp-redis-volume
 
 networks:
   default:

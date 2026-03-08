@@ -1,7 +1,3 @@
-export const jwtConstants = {
-  secret: process.env.PP_BE_SECRET,
-};
-
 export const userDefaultDataDTO = {
   register: {
     operator: {
@@ -105,6 +101,23 @@ export const userDefaultDataDTO = {
     },
   },
   logout: {
+    token: {
+      summary: 'User token',
+      description: 'User token sample payload',
+      value: {
+        token:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30',
+      },
+    },
+  },
+  refresh: {
+    userId: {
+      summary: 'User ID',
+      description: 'User ID sample payload',
+      value: {
+        userId: 1,
+      },
+    },
     token: {
       summary: 'User token',
       description: 'User token sample payload',
