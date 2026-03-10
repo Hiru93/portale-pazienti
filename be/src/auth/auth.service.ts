@@ -23,7 +23,7 @@ export class AuthService {
     password: string,
   ): Promise<{
     access_token: string;
-    refresh_token: string;
+    refresh_token?: string;
   }> {
     if (!email || !password) {
       throw new UnauthorizedException('Missing params');
