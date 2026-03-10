@@ -25,18 +25,14 @@ export type LoginSliceState = {
   userInfo: BasicUserInfo | null
 }
 
-const initialTokenValue: string | null = loadLocalInfo("accessToken")
-
 const initialState: LoginSliceState = {
   loginStatus: "idle",
   signupStatus: "idle",
   logoutStatus: "idle",
-  accessToken: initialTokenValue,
-  authLevel: initialTokenValue ? tokenParse(initialTokenValue).user_auth : null,
-  availableComponents: initialTokenValue
-    ? tokenParse(initialTokenValue).available_components
-    : null,
-  userInfo: initialTokenValue ? tokenParse(initialTokenValue).user_data : null,
+  accessToken: null,
+  authLevel: null,
+  availableComponents: null,
+  userInfo: null,
 }
 
 export const loginSlice = createAppSlice({
@@ -62,6 +58,12 @@ export const loginSlice = createAppSlice({
           state.loginStatus = "success"
           state.logoutStatus = "idle"
           state.accessToken = access_token
+          if (access_token && loadLocalInfo("userId") !== tokenParse(access_token).user_id.toString()) {
+            localStorage.setItem("userId", tokenParse(access_token).user_id.toString())
+          }
+          state.loginStatus = "success"
+          state.logoutStatus = "idle"
+          state.accessToken = access_token
           if (access_token && loadLocalInfo("accessToken") !== access_token) {
             localStorage.setItem("accessToken", access_token)
           }
@@ -74,7 +76,7 @@ export const loginSlice = createAppSlice({
           console.error("Login failed")
           state.loginStatus = "failed"
           state.accessToken = null
-          localStorage.removeItem("accessToken")
+          localStorage.removeItem("userId")
           state.authLevel = null
           state.userInfo = null
         },
@@ -91,7 +93,7 @@ export const loginSlice = createAppSlice({
         fulfilled: state => {
           state.logoutStatus = "success"
           state.accessToken = null
-          localStorage.removeItem("accessToken")
+          localStorage.removeItem("userId")
           state.authLevel = null
           state.userInfo = null
         },
@@ -134,7 +136,7 @@ export const loginSlice = createAppSlice({
           const access_token = action.payload.data?.access_token
           if (!access_token) return
           state.accessToken = access_token
-          localStorage.setItem("accessToken", access_token)
+          localStorage.setItem("userId", tokenParse(access_token).user_id.toString())
           const parsed = tokenParse(access_token)
           state.authLevel = parsed.user_auth
           state.userInfo = parsed.user_data
@@ -143,7 +145,7 @@ export const loginSlice = createAppSlice({
         rejected: state => {
           // refresh failed → full logout
           state.accessToken = null
-          localStorage.removeItem("accessToken")
+          localStorage.removeItem("userId")
           state.authLevel = null
           state.userInfo = null
         },

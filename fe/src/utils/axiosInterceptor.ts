@@ -1,5 +1,5 @@
 import type { AppStore } from "@/app/store"
-import { tokenParse } from "./store-utils"
+import { tokenParse, loadLocalInfo } from "./store-utils"
 import { refreshUser, logoutUser, selectAccessToken } from "@/features/login/LoginSlice"
 import apiClient from "./apiClient"
 import type { AxiosError } from "axios"
@@ -47,9 +47,11 @@ export const setupInterceptors = (store: AppStore) => {
 
       originalRequest._retry = true
       const token = selectAccessToken(store.getState())
-      if (!token) return Promise.reject(error)
+      const userId = token
+        ? String(tokenParse(token).user_id)
+        : loadLocalInfo("userId")
 
-      const userId = String(tokenParse(token).user_id)
+      if (!userId) return Promise.reject(error)
 
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -73,7 +75,7 @@ export const setupInterceptors = (store: AppStore) => {
           return await apiClient(originalRequest)
         } else {
           rejectQueue(error)
-          await store.dispatch(logoutUser({ token }))
+          await store.dispatch(logoutUser({ token: token ?? "" }))
           return await Promise.reject(error)
         }
       } catch (err) {

@@ -1,12 +1,26 @@
-import { type JSX } from "react";
-import { useAppSelector } from "@/app/hooks";
+import { type JSX, useEffect, useState } from "react";
+import { useAppSelector, useAppDispatch } from "@/app/hooks";
 import { Navigate } from "react-router";
-import { selectAccessToken } from "@/features/login/LoginSlice";
+import { selectAccessToken, refreshUser } from "@/features/login/LoginSlice";
 import { authLevels } from "./constants";
-import { tokenParse } from "./store-utils";
+import { tokenParse, loadLocalInfo } from "./store-utils";
 
 export const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole: string }) => {
     const accessToken = useAppSelector(selectAccessToken)
+    const dispatch = useAppDispatch()
+    const [initializing, setInitializing] = useState(!accessToken)
+
+    useEffect(() => {
+        if (accessToken) return
+        const userId = loadLocalInfo("userId")
+        if (!userId) { setInitializing(false); return }
+        void dispatch(refreshUser(userId)).finally(() => {
+            setInitializing(false)
+        })
+    }, [])
+
+    if (initializing) return null
+
     const decodedToken = accessToken ? tokenParse(accessToken) : null
 
     console.log("Decoded token in ProtectedRoute: ", decodedToken)
