@@ -20,6 +20,10 @@ export class AuthService {
     password: string,
   ): Promise<{
     access_token: string;
+<<<<<<< Updated upstream
+=======
+    refresh_token?: string;
+>>>>>>> Stashed changes
   }> {
     if (!email || !password) {
       throw new UnauthorizedException('Missing params');
