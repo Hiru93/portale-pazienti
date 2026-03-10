@@ -13,6 +13,7 @@ import { FaCalendar, FaUserMd, FaFileAlt, FaCommentMedical } from "react-icons/f
 import { Topbar } from "@/features/topbar/Topbar";
 import { AbsoluteCenter, Box, Grid, GridItem, Stack, VStack, HStack, Icon } from "@chakra-ui/react";
 import { selectAvailableComponents } from "../login/LoginSlice";
+import { FindSpecialist } from "../findSpecialist/FindSpecialist";
 // #endregion [Library Imports]
 
 export const Dashboard = (): JSX.Element => {
@@ -34,6 +35,13 @@ export const Dashboard = (): JSX.Element => {
         FaUserMd: <FaUserMd />,
         FaFileAlt: <FaFileAlt />
     };
+
+    const componentMap: Record<string, JSX.Element> = {
+        agenda: <div>Agenda Component</div>,
+        find_specialist: <FindSpecialist />,
+        medical_report: <div>Medical Report Component</div>,
+        profile: <div>Profile Component</div>
+    }
     // #endRegion [Constants]
 
     // #region [UI Logic]
@@ -84,24 +92,13 @@ export const Dashboard = (): JSX.Element => {
                         </Grid>
                     </AbsoluteCenter>
                     <Box
-                        position="fixed"
-                        bottom="2.5vh"
-                        left="2.5vw"
-                        height="83vh"
-                        width="95vw"
                         bg="bg.emphasized"
                         borderRadius="md"
                         boxShadow="md"
                         color="fg"
                         transform={selectedComponent ? 'translateY(0vh)' : 'translateY(100vh)'}
-                        transition="transform 1.4s ease, opacity 1.4s ease"
-                        zIndex="5"
-                        padding="20px"
-                    >
-                        <span>id: {selectedComponent?.id}</span><br />
-                        <span>name: {selectedComponent?.name}</span><br />
-                        <span>label: {selectedComponent?.label}</span><br />
-                        <span>icon: {selectedComponent?.icon}</span><br />
+                        className={`${styles.componentContainer}${selectedComponent ? '' : styles.hiddenComponentContainer}`}>
+                        {componentMap[selectedComponent?.name ?? '']}
                     </Box>
                 </VStack>
             </Stack>
