@@ -7,6 +7,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './users/user.module';
 import { CommonModule } from './commons/common.module';
 import { RedisModule } from './redis/redis.module';
+import { SpecialistModule } from './specialists/specialist.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RedisModule } from './redis/redis.module';
     CommonModule,
     AuthModule,
     UserModule,
+    SpecialistModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })
