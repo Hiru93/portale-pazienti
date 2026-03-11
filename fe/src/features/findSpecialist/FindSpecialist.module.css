@@ -1,0 +1,33 @@
+.baseContainer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    height: 100%;
+    width: 100%;
+}
+
+.closedResultsDrawer {
+    scrollbar-width: none; /* Firefox */
+    width: 0%;
+    height: 100%;
+    overflow-y: scroll;
+    transition: width 1.4s ease;
+}
+
+.closedResultsDrawer::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+.openedResultsDrawer {
+    width: 40%;
+}
+
+.resultItem {
+    padding: 10px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.selectedResult {
+    border: 1px solid #F56565;
+}
