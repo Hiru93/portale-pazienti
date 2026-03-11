@@ -81,6 +81,7 @@ CREATE TABLE opening_schedule (
     closing_morning TIME NOT NULL,
     opening_afternoon TIME NOT NULL,
     closing_afternoon TIME NOT NULL,
+    slot_size_minutes INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
@@ -190,6 +191,27 @@ CREATE TABLE health_service (
     FOREIGN KEY (id_patient) REFERENCES patient(id),
     FOREIGN KEY (id_request) REFERENCES request(id),
     FOREIGN KEY (id_document) REFERENCES document(id)
+);
+
+-- Table appointments
+DROP TABLE IF EXISTS appointment;
+CREATE TABLE appointment (
+    id SERIAL PRIMARY KEY,
+    id_patient   INTEGER NOT NULL,
+    id_specialist INTEGER NOT NULL,
+    id_status    INTEGER NOT NULL,
+    date         DATE NOT NULL,
+    time_start   TIME NOT NULL,
+    time_end     TIME NOT NULL,
+    notes        TEXT,
+    deleted      BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at   TIMESTAMP,
+    FOREIGN KEY (id_patient)    REFERENCES patient(id),
+    FOREIGN KEY (id_specialist) REFERENCES specialist(id),
+    FOREIGN KEY (id_status)     REFERENCES status(id),
+    UNIQUE (id_specialist, date, time_start)  -- prevent double-booking
 );
 
 -- Table user_to_document
