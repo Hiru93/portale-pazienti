@@ -1,6 +1,9 @@
 // #region [Type Imports]
 import { Box, Button, HStack, Stack, VStack } from "@chakra-ui/react";
-import { useCallback, useMemo, useState, type JSX } from "react";
+import { useCallback, useEffect, useMemo, useState, type JSX } from "react";
+import {
+    type FindSpecialistItem
+} from "@/app/types";
 // #endregion [Type Imports]
 
 // #region [Style Imports]
@@ -11,6 +14,7 @@ import styles from "./FindSpecialist.module.css";
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import { RiMapPin2Fill } from 'react-icons/ri'
 import type { Map } from 'leaflet'
+import { useLazyGetSpecialistsQuery } from "./FindSpecialistApiSlice";
 // #endregion [Library Imports]
 
 export const FindSpecialist = (): JSX.Element => {
@@ -19,21 +23,12 @@ export const FindSpecialist = (): JSX.Element => {
     // #endregion [Helpers and utils]
 
     // #region [Redux State]
+    const [fetchSpecialists, { data: specialists, isLoading: isLoadingSpecialists, isFetching: isFetchingSpecialists }] = useLazyGetSpecialistsQuery();
     // #endRegion [Redux State]
 
     // #region [Constants]
     const initialMapCenter = { lat: 45.40781159193707, lng: 11.873366454660607 };
     const zoom = 13;
-    const mockedSpecialists = [
-        { visible: true, name: "Dr. Rossi", lat: 45.41234, lng: 11.87891 }, // ~650m NE
-        { visible: true, name: "Dr. Bianchi", lat: 45.40312, lng: 11.87012 }, // ~700m SW
-        { visible: true, name: "Dr. Verdi", lat: 45.41089, lng: 11.86754 }, // ~800m NW
-        { visible: true, name: "Dr. Esposito", lat: 45.40456, lng: 11.88123 }, // ~600m SE
-        { visible: true, name: "Dr. Ferrari", lat: 45.41567, lng: 11.87445 }, // ~860m N
-        { visible: true, name: "Dr. Conti", lat: 45.40098, lng: 11.87234 }, // ~750m S
-        { visible: true, name: "Dr. Marino", lat: 45.40923, lng: 11.88456 }, // ~900m E
-        { visible: true, name: "Dr. Greco", lat: 45.40612, lng: 11.86389 }, // ~850m W
-    ];
 
     // #endRegion [Constants]
 
@@ -46,6 +41,33 @@ export const FindSpecialist = (): JSX.Element => {
     // #endRegion [Local State]
 
     // #region [UI Logic]
+    useEffect(() => {
+        // The following OR is necessary in order to correctly bypass RTKQuery caching 
+        // (if the data fetched is the same as the one already in the cache, RTKQuery will 
+        // not update the data and consequently not trigger this useEffect, which is what we 
+        // want in this case since we want to trigger the map animation even if the user 
+        // clicks multiple times on the "Set results" button)
+        if (isLoadingSpecialists || isFetchingSpecialists) return
+        if (!specialists) return
+        const mappedResults = specialists.map((specialist: FindSpecialistItem) => ({
+            name: `${specialist.first_name} ${specialist.last_name} - ${specialist.clinic_name}`,
+            lat: specialist.clinic_coords.y,
+            lng: specialist.clinic_coords.x,
+            visible: true
+        }))
+        setResults(mappedResults)
+        setDynamicMarkers(mappedResults)
+    }, [specialists, isLoadingSpecialists, isFetchingSpecialists])
+
+    useEffect(() => {
+        /* The following actually calls the method .invalidateSize with a rate
+        of 60fps in order to match the flow of the css transition */
+        if (!results) return
+        const interval = setInterval(() => { map?.invalidateSize() }, 16)
+        setTimeout(() => { clearInterval(interval); map?.invalidateSize() }, 1400)
+    }, [results, map])
+
+
     const displayMap = useMemo(
         () => (
             <MapContainer
@@ -61,7 +83,7 @@ export const FindSpecialist = (): JSX.Element => {
                 {dynamicMarkers?.filter(marker => marker.visible).map((marker, index) => (
                     <Marker key={index} position={marker}>
                         <Popup>
-                            A pretty CSS3 popup. <br /> Easily customizable.
+                            {marker.name}
                         </Popup>
                     </Marker>
                 ))}
@@ -82,20 +104,14 @@ export const FindSpecialist = (): JSX.Element => {
         setSelectedResult(null)
         setDynamicMarkers(null)
         setResults(null)
-        /* The following actually calls the method .invalidateSize with a rate
-        of 60fps in order to match the flow of the css transition */
-        const interval = setInterval(() => {
-            map?.invalidateSize();
-        }, 16);
-        setTimeout(() => {
-            clearInterval(interval);
-            map?.flyTo(initialMapCenter, zoom);
-        }, 1400);
     }, [map])
 
-    const handleSetResults = useCallback(() => {
-        setResults(mockedSpecialists);
-        setDynamicMarkers(mockedSpecialists);
+    const handleSetResults = useCallback(async () => {
+        await fetchSpecialists({
+            lat: 45.40781159193707,
+            lng: 11.873366454660607,
+            radius: 10
+        });
         /* The following actually calls the method .invalidateSize with a rate
         of 60fps in order to match the flow of the css transition */
         const interval = setInterval(() => {
@@ -116,7 +132,9 @@ export const FindSpecialist = (): JSX.Element => {
                     <VStack className={styles.baseContainer} style={{ minHeight: 0 }} gap={5}>
                         <HStack gap={5}>
                             <Button
-                                onClick={() => { handleSetResults() }}>
+                                onClick={() => {
+                                    void handleSetResults();
+                                }}>
                                 Set results
                             </Button>
                             <Button
