@@ -176,6 +176,7 @@ erDiagram
         varchar clinic_city
         varchar clinic_address
         varchar clinic_phone
+        point clinic_coords
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -224,6 +225,22 @@ erDiagram
         time closing_morning
         time opening_afternoon
         time closing_afternoon
+        integer slot_size_minutes
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    appointment {
+        serial id PK
+        integer id_patient FK
+        integer id_specialist FK
+        integer id_status FK
+        date date
+        time time_start
+        time time_end
+        text notes
+        boolean deleted
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -385,7 +402,31 @@ erDiagram
     sms_notification_dispatch_state ||--o{ sms_notification : "id_sms_notification_dispatch_state"
     sms_notification_response ||--o{ sms_notification : "id_sms_notification_response"
     notification ||--o{ sms_notification : "id_notification"
+
+    patient ||--o{ appointment : "id_patient"
+    specialist ||--o{ appointment : "id_specialist"
+    status ||--o{ appointment : "id_status"
 ```
+
+### How migrations extend the schema
+
+`db/01-init.sql` is executed once by Docker when the container is first created. It defines the baseline schema. All subsequent structural or data changes are handled by Knex migrations in the `migrations/` directory, which are applied in chronological order (by filename timestamp) via `npm run migration:migrate`.
+
+| Migration file | What it does |
+|---|---|
+| `20250314140713_ghost_user` | Seeds ghost users (patient, specialist, bo_operator) and their credentials — used as safe placeholders in dev/test |
+| `20250314145728_dictionary_tables` | Populates `day` (Mon–Sun) and `status` dictionary tables |
+| `20260210150524_role_populate` | Seeds `operator` and `patient` roles |
+| `20260224163503_dentist_role` | Seeds `specialist` role |
+| `20260302154718_components_table` | Creates the `component` table for frontend module definitions |
+| `20260306135542_module_agenda_3_4` | Seeds the `agenda` component (roles: patient, specialist) |
+| `20260306140123_module_find_specialist_3` | Seeds the `find_specialist` component (roles: patient, specialist) |
+| `20260306140415_module_medical_report_3_4` | Seeds the `medical_report` component (roles: patient, specialist) |
+| `20260306140533_module_profile_1_2_3_4` | Seeds the `profile` component (all roles) |
+| `20260306152953_components_extension` | Adds `label`, `icon`, and `order` columns to `component` and sets their values |
+| `20260311080718_clinic_coords` | Adds the `clinic_coords` (`point`) column to `specialist` for geospatial queries |
+| `20260311090000_specialists_seed` | Seeds ~400 specialist records across 40 Italian cities, their weekly `opening_schedule` entries, and a `user_credential` for each (password: `sonoUnaPasswordDiTest`) |
+| `20260311095000_appointment_and_schedule_slot` | Adds `slot_size_minutes` to `opening_schedule`; creates the `appointment` table |
 
 ## Swagger
 

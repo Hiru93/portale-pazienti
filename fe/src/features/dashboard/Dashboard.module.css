@@ -48,3 +48,14 @@
 .iconWrapperSelected {
     color: #F56565;
 }
+
+.componentContainer {
+    position: fixed;
+    bottom: 2.5vh;
+    left: 2.5vw;
+    height: 83vh;
+    width: 95vw;
+    transition: transform 1.4s ease, opacity 1.4s ease;
+    z-index: 5;
+    padding: 20px;
+}

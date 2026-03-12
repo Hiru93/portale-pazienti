@@ -5,10 +5,15 @@ import { setupListeners } from "@reduxjs/toolkit/query"
 // Slices
 import { loginSlice } from "../features/login/LoginSlice"
 import { rolesApiSlice } from "@/features/login/LoginApiSlice"
+import { findSpecialistApiSlice } from "@/features/findSpecialist/FindSpecialistApiSlice"
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
-const rootReducer = combineSlices(loginSlice, rolesApiSlice)
+const rootReducer = combineSlices(
+  loginSlice,
+  rolesApiSlice,
+  findSpecialistApiSlice,
+)
 // Infer the `RootState` type from the root reducer
 export type RootState = ReturnType<typeof rootReducer>
 
@@ -18,7 +23,9 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
   const store = configureStore({
     reducer: rootReducer,
     middleware: getDefaultMiddleware => {
-      return getDefaultMiddleware().concat(rolesApiSlice.middleware)
+      return getDefaultMiddleware()
+        .concat(rolesApiSlice.middleware)
+        .concat(findSpecialistApiSlice.middleware)
     },
     // Adding the api middleware enables caching, invalidation, polling,
     // and other useful features of `rtk-query`.

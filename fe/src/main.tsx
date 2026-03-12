@@ -8,6 +8,7 @@ import { App } from "./App"
 
 import { store } from "./app/store"
 import "./index.css"
+import 'leaflet/dist/leaflet.css';
 
 setupInterceptors(store)
 
