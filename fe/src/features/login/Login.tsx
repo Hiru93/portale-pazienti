@@ -32,7 +32,8 @@ import {
     Select,
     Stack,
     Text,
-    VStack
+    VStack,
+    Portal
 } from "@chakra-ui/react"
 import { BeatLoader } from "react-spinners"
 import { PasswordInput, PasswordStrengthMeter } from "@/components/ui/password-input"
@@ -153,14 +154,6 @@ export const Login = (): JSX.Element => {
     // #endregion
 
     // #region [UI Logic]
-    // const rolesCollection = useMemo(() => {
-    //     return createListCollection({
-    //         items: roles ?? [],
-    //         itemToString: role => role.description,
-    //         itemToValue: role => String(role.id)
-    //     })
-    // }, [roles])
-
     const genderCollection = useMemo(() => {
         return createListCollection({
             items: genderOptions,
@@ -429,18 +422,6 @@ export const Login = (): JSX.Element => {
                                     </Box>
                                     {showSignupForm ?
                                         <>
-                                            {/* <Select.Root collection={rolesCollection} disabled={rolesLoading}>
-                                                <Select.Trigger>
-                                                    <Select.ValueText placeholder="Select Role" mb="2" />
-                                                </Select.Trigger>
-                                                <Select.Content>
-                                                    {rolesCollection.items.map((role: Role) => (
-                                                        <Select.Item item={role} key={role.id}>
-                                                            {role.description}
-                                                        </Select.Item>
-                                                    ))}
-                                                </Select.Content>
-                                            </Select.Root> */}
                                             <Field.Root required invalid={hasAttemptedSubmit && !validationControls.email} mb="2">
                                                 <Field.Label>
                                                     Email <Field.RequiredIndicator />
@@ -501,17 +482,24 @@ export const Login = (): JSX.Element => {
                                                                     value={[userGender]}
                                                                     onValueChange={(e) => { setUserGender(e.value[0] ?? "") }}
                                                                 >
+                                                                    <Select.HiddenSelect />
                                                                     <Select.Label>{field.label}</Select.Label>
-                                                                    <Select.Trigger>
-                                                                        <Select.ValueText placeholder="" />
-                                                                    </Select.Trigger>
-                                                                    <Select.Content>
-                                                                        {genderCollection.items.map((option) => (
-                                                                            <Select.Item item={option} key={option.value}>
-                                                                                {option.label}
-                                                                            </Select.Item>
-                                                                        ))}
-                                                                    </Select.Content>
+                                                                    <Select.Control>
+                                                                        <Select.Trigger>
+                                                                            <Select.ValueText placeholder="" />
+                                                                        </Select.Trigger>
+                                                                    </Select.Control>
+                                                                    <Portal>
+                                                                        <Select.Positioner>
+                                                                            <Select.Content>
+                                                                                {genderCollection.items.map((option) => (
+                                                                                    <Select.Item item={option} key={option.value}>
+                                                                                        {option.label}
+                                                                                    </Select.Item>
+                                                                                ))}
+                                                                            </Select.Content>
+                                                                        </Select.Positioner>
+                                                                    </Portal>
                                                                 </Select.Root>
                                                             )
                                                         case 'text':
