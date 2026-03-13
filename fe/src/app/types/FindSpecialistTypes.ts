@@ -14,6 +14,17 @@ export type FindSpecialistItem = {
   clinic_schedule: ClinicSchedule[]
 }
 
+export type FindSpecialistResultItem = {
+    name: string
+    lat: number
+    lng: number
+    visible: boolean
+    clinic_name: string
+    clinic_address: string
+    clinic_phone: string
+    clinic_schedule: ClinicSchedule[]
+}
+
 export type ClinicSchedule = {
   id: string
   id_day: number
@@ -43,10 +54,12 @@ export type LeafletSearchResult = {
   bounds: [
     [number, number], // s, w - lat, lon
     [number, number], // n, e - lat, lon
-  ]
+  ],
+  radius?: string
 }
 
 export type Radius = {
     id: string
     label: string
+    value: string
 }

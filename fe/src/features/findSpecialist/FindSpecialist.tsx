@@ -4,7 +4,8 @@ import { type ChangeEvent, type JSX } from "react";
 import {
     type Radius,
     type FindSpecialistItem,
-    type LeafletSearchResult
+    type LeafletSearchResult,
+    type FindSpecialistResultItem
 } from "@/app/types";
 // #endregion [Type Imports]
 
@@ -20,6 +21,7 @@ import { OpenStreetMapProvider } from "leaflet-geosearch";
 import { useLazyGetSpecialistsQuery } from "./FindSpecialistApiSlice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { FaPhoneAlt } from "react-icons/fa";
 // #endregion [Library Imports]
 
 export const FindSpecialist = (): JSX.Element => {
@@ -39,10 +41,10 @@ export const FindSpecialist = (): JSX.Element => {
     const initialMapCenter = { lat: 45.40781159193707, lng: 11.873366454660607 };
     const zoom = 13;
     const radiusOptions = useMemo<Radius[]>(() => [
-        { id: '1', label: '5 km' },
-        { id: '2', label: '10 km' },
-        { id: '3', label: '20 km' },
-        { id: '4', label: '50 km' },
+        { id: '1', label: '5 km', value: "5" },
+        { id: '2', label: '10 km', value: "10" },
+        { id: '3', label: '20 km', value: "20" },
+        { id: '4', label: '50 km', value: "50" },
     ], [])
     // take a look here: https://www.npmjs.com/package/leaflet-geosearch
     const provider = new OpenStreetMapProvider({
@@ -55,10 +57,10 @@ export const FindSpecialist = (): JSX.Element => {
 
     // #region [Local State]
     const [map, setMap] = useState<Map | null>(null);
-    const [dynamicMarkers, setDynamicMarkers] = useState<{ name: string, lat: number, lng: number, visible: boolean }[] | null>(null);
+    const [dynamicMarkers, setDynamicMarkers] = useState<FindSpecialistResultItem[] | null>(null);
     const [mapCenter, setMapCenter] = useState<{ lat: number, lng: number }>(initialMapCenter);
-    const [results, setResults] = useState<{ name: string, lat: number, lng: number, visible: boolean }[] | null>(null);
-    const [selectedResult, setSelectedResult] = useState<{ name: string, lat: number, lng: number, visible: boolean } | null>(null);
+    const [results, setResults] = useState<FindSpecialistResultItem[] | null>(null);
+    const [selectedResult, setSelectedResult] = useState<FindSpecialistResultItem | null>(null);
     const [geoSearchParams, setGeoSearchParams] = useState<string>('');
     const [selectedRadius, setSelectedRadius] = useState<string>('');
     const [suggestions, setSuggestions] = useState<LeafletSearchResult[]>([]);
@@ -69,7 +71,7 @@ export const FindSpecialist = (): JSX.Element => {
         return createListCollection<Radius>({
             items: radiusOptions,
             itemToString: (radius: Radius) => radius.label,
-            itemToValue: (radius: Radius) => radius.id
+            itemToValue: (radius: Radius) => radius.value
         })
     }, [radiusOptions])
 
@@ -82,10 +84,13 @@ export const FindSpecialist = (): JSX.Element => {
         if (isLoadingSpecialists || isFetchingSpecialists) return
         if (!specialists) return
         const mappedResults = specialists.map((specialist: FindSpecialistItem) => ({
-            name: `${specialist.first_name} ${specialist.last_name} - ${specialist.clinic_name}`,
+            name: `${specialist.first_name} ${specialist.last_name}`,
             lat: specialist.clinic_coords.y,
             lng: specialist.clinic_coords.x,
-            schedule: specialist.clinic_schedule,
+            clinic_schedule: specialist.clinic_schedule,
+            clinic_address: specialist.clinic_address,
+            clinic_name: specialist.clinic_name,
+            clinic_phone: specialist.clinic_phone,
             visible: true
         }))
         if (mappedResults.length) {
@@ -156,7 +161,7 @@ export const FindSpecialist = (): JSX.Element => {
         [dynamicMarkers],
     )
 
-    const handleDiveInMap = useCallback((selectedMarker: { name: string, lat: number, lng: number, visible: boolean }) => {
+    const handleDiveInMap = useCallback((selectedMarker: FindSpecialistResultItem) => {
         if (!map) return
         setDynamicMarkers(dynamicMarkers?.map(marker => ({ ...marker, visible: marker.name === selectedMarker.name })) ?? [])
         setSelectedResult(selectedMarker)
@@ -178,7 +183,7 @@ export const FindSpecialist = (): JSX.Element => {
         await fetchSpecialists({
             lat: query.y,
             lng: query.x,
-            radius: selectedRadius ? selectedRadius : "25"
+            radius: query.radius ?? '25'
         });
     }, [map])
 
@@ -224,7 +229,7 @@ export const FindSpecialist = (): JSX.Element => {
                                             <Popover.Content>
                                                 {suggestions.map((suggestion, index) => (
                                                     <Box 
-                                                        onMouseDown={() => void handleGeoSearch(suggestion)} 
+                                                        onMouseDown={() => void handleGeoSearch({ ...suggestion, radius: selectedRadius })} 
                                                         key={index}
                                                         className={styles.resultItem}
                                                     >
@@ -242,6 +247,7 @@ export const FindSpecialist = (): JSX.Element => {
                                     value={[selectedRadius]}
                                     variant="subtle"
                                     width="250px"
+                                    onValueChange={(details) => { setSelectedRadius(details.value[0]) }}
                                 >
                                     <Select.HiddenSelect />
                                     <Select.Control>
@@ -255,7 +261,7 @@ export const FindSpecialist = (): JSX.Element => {
                                         <Select.Positioner>
                                             <Select.Content>
                                                 {radiusCollection.items.map((radius: Radius) => (
-                                                    <Select.Item item={radius} key={radius.id} onClick={() => { setSelectedRadius(radius.id) }}>
+                                                    <Select.Item item={radius} key={radius.id} onClick={() => { setSelectedRadius(radius.value) }}>
                                                         {radius.label}
                                                     </Select.Item>
                                                 ))}
@@ -271,7 +277,7 @@ export const FindSpecialist = (): JSX.Element => {
                         </HStack>
                         <HStack style={{ flex: 1, minHeight: 0, width: '100%' }} gap={5}>
                             <VStack className={`${styles.closedResultsDrawer} ${results ? styles.openedResultsDrawer : ''}`}>
-                                {results?.length ? results.map((result: { name: string, lat: number, lng: number, visible: boolean }, index: number) => (
+                                {results?.length ? results.map((result: FindSpecialistResultItem, index: number) => (
                                     <Box
                                         key={index}
                                         boxShadow={selectedResult?.name === result.name ? 'md' : ''}
@@ -280,11 +286,11 @@ export const FindSpecialist = (): JSX.Element => {
                                         style={{ width: '100%' }}
                                         onClick={() => { handleDiveInMap(result) }}>
                                         <VStack alignItems="flex-start" gap={0}>
-                                            <span className={styles.resultName}>{result.name}</span>
-                                            <span className={styles.resultCoordinates}>Lat: {result.lat.toFixed(5)}, Lng: {result.lng.toFixed(5)}</span>
+                                            <span className={styles.resultName}>{result.name} - {result.clinic_name}</span>
+                                            <HStack style={{ width: '100%' }}><RiMapPin2Fill /> <span>{result.clinic_address}</span></HStack>
+                                            <HStack style={{ width: '100%' }}><FaPhoneAlt /> <span>{result.clinic_phone}</span></HStack>
                                         </VStack>
                                         <HStack style={{ width: '100%' }} key={index}>
-                                            <span>{result.name}</span> <RiMapPin2Fill />
                                             <Button
                                                 onClick={() => { console.log('Show schedule handler ', result) }}
                                                 colorPalette="cyan"
