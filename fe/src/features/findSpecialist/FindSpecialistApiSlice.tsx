@@ -17,7 +17,7 @@ export const findSpecialistApiSlice = createApi({
     reducerPath: "specialistsApi",
     tagTypes: ["Specialists"],
     endpoints: build => ({
-        getSpecialists: build.query<FindSpecialistItem[], { lat: number, lng: number, radius: number }>({
+        getSpecialists: build.query<FindSpecialistItem[], { lat: number, lng: number, radius: string }>({
             query: ({ lat, lng, radius }) => `/?lat=${lat as unknown as string}&lng=${lng as unknown as string}&radius=${radius as unknown as string}`,
             providesTags: ["Specialists"],
             transformResponse: (response: { specialists: FindSpecialistItem[] }) => response.specialists,
