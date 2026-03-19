@@ -1,3 +1,5 @@
+import type { Day } from "./CommonTypes"
+
 export type FindSpecialistItem = {
   id: string
   first_name: string
@@ -15,6 +17,7 @@ export type FindSpecialistItem = {
 }
 
 export type FindSpecialistResultItem = {
+    id: string
     name: string
     lat: number
     lng: number
@@ -27,7 +30,8 @@ export type FindSpecialistResultItem = {
 
 export type ClinicSchedule = {
   id: string
-  id_day: number
+  id_day: string
+  day?: Day
   id_specialist: string
   deleted: boolean
   opening_morning: string
