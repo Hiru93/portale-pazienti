@@ -1,11 +1,13 @@
 // #region [Type Imports]
-import { Box, Button, createListCollection, Field, HStack, Input, Popover, Portal, Select, Stack, VStack } from "@chakra-ui/react";
-import { type ChangeEvent, type JSX } from "react";
-import {
-    type Radius,
-    type FindSpecialistItem,
-    type LeafletSearchResult,
-    type FindSpecialistResultItem
+import { Box, Button, createListCollection, Field, Grid, GridItem, HStack, Input, Popover, Portal, Select, Stack, VStack } from "@chakra-ui/react";
+import type { ChangeEvent, JSX } from "react";
+import type {
+    Radius,
+    FindSpecialistItem,
+    LeafletSearchResult,
+    FindSpecialistResultItem,
+    Day,
+    ClinicSchedule
 } from "@/app/types";
 // #endregion [Type Imports]
 
@@ -19,9 +21,13 @@ import { RiMapPin2Fill } from 'react-icons/ri'
 import type { Map } from 'leaflet'
 import { OpenStreetMapProvider } from "leaflet-geosearch";
 import { useLazyGetSpecialistsQuery } from "./FindSpecialistApiSlice";
+import { useGetDaysQuery } from "./DictionaryApiSlice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { FaPhoneAlt } from "react-icons/fa";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
 // #endregion [Library Imports]
 
 export const FindSpecialist = (): JSX.Element => {
@@ -35,6 +41,7 @@ export const FindSpecialist = (): JSX.Element => {
         isLoading: isLoadingSpecialists,
         isFetching: isFetchingSpecialists
     }] = useLazyGetSpecialistsQuery();
+    const { data: daysDictionary } = useGetDaysQuery(undefined);
     // #endRegion [Redux State]
 
     // #region [Constants]
@@ -64,6 +71,8 @@ export const FindSpecialist = (): JSX.Element => {
     const [geoSearchParams, setGeoSearchParams] = useState<string>('');
     const [selectedRadius, setSelectedRadius] = useState<string>('');
     const [suggestions, setSuggestions] = useState<LeafletSearchResult[]>([]);
+    const [pendingLocation, setPendingLocation] = useState<LeafletSearchResult | null>(null);
+    const [openSpecialistSchedule, setOpenSpecialistSchedule] = useState<{ id: string, schedule: FindSpecialistResultItem['clinic_schedule'] } | null>(null);
     // #endRegion [Local State]
 
     // #region [UI Logic]
@@ -84,10 +93,17 @@ export const FindSpecialist = (): JSX.Element => {
         if (isLoadingSpecialists || isFetchingSpecialists) return
         if (!specialists) return
         const mappedResults = specialists.map((specialist: FindSpecialistItem) => ({
+            id: specialist.id,
             name: `${specialist.first_name} ${specialist.last_name}`,
             lat: specialist.clinic_coords.y,
             lng: specialist.clinic_coords.x,
-            clinic_schedule: specialist.clinic_schedule,
+            clinic_schedule: specialist.clinic_schedule.map((scheduleItem: ClinicSchedule) => {
+                const dayData = daysDictionary?.find((day: Day) => day.id === scheduleItem.id_day);
+                return {
+                    ...scheduleItem,
+                    day: dayData ?? scheduleItem.day
+                }
+            }),
             clinic_address: specialist.clinic_address,
             clinic_name: specialist.clinic_name,
             clinic_phone: specialist.clinic_phone,
@@ -127,7 +143,7 @@ export const FindSpecialist = (): JSX.Element => {
         }
         setResults(mappedResults)
         setDynamicMarkers(mappedResults)
-    }, [specialists, isLoadingSpecialists, isFetchingSpecialists])
+    }, [daysDictionary, specialists, isLoadingSpecialists, isFetchingSpecialists])
 
     useEffect(() => {
         /* The following actually calls the method .invalidateSize with a rate
@@ -175,17 +191,29 @@ export const FindSpecialist = (): JSX.Element => {
         setResults(null)
         setGeoSearchParams('')
         setSuggestions([]);
+        setPendingLocation(null);
     }, [map])
 
-    const handleGeoSearch = useCallback(async (query: LeafletSearchResult) => {
+    const handleSuggestionSelect = useCallback((suggestion: LeafletSearchResult) => {
+        setGeoSearchParams(suggestion.label);
+        setPendingLocation(suggestion);
+        setSuggestions([]);
+    }, [])
+
+    const handleGeoSearch = useCallback(async () => {
+        if (!pendingLocation) return
+        const query = {
+            ...pendingLocation,
+            radius: selectedRadius || '25'
+        };
         setGeoSearchParams(query.label);
         setSuggestions([]);
         await fetchSpecialists({
             lat: query.y,
             lng: query.x,
-            radius: query.radius ?? '25'
+            radius: query.radius
         });
-    }, [map])
+    }, [selectedRadius, pendingLocation, fetchSpecialists])
 
     const debouncedGeosearch = useDebouncedCallback(async (value: string) => {
         if (!value) return
@@ -209,8 +237,8 @@ export const FindSpecialist = (): JSX.Element => {
             <Stack className={styles.baseContainer}>
                 <HStack className={styles.baseContainer}>
                     <VStack className={styles.baseContainer} style={{ minHeight: 0 }} gap={5}>
-                        <HStack gap={5}>
-                            <Field.Root>
+                        <HStack gap={5} justifyContent="flex-end" width="100%">
+                            <Field.Root width="auto">
                                 <Popover.Root open={suggestions.length > 0}>
                                     <Popover.Anchor asChild>
                                         <Input
@@ -228,10 +256,11 @@ export const FindSpecialist = (): JSX.Element => {
                                         <Popover.Positioner>
                                             <Popover.Content>
                                                 {suggestions.map((suggestion, index) => (
-                                                    <Box 
-                                                        onMouseDown={() => void handleGeoSearch({ ...suggestion, radius: selectedRadius })} 
+                                                    <Box
+                                                        onMouseDown={() => { handleSuggestionSelect(suggestion) }}
                                                         key={index}
                                                         className={styles.resultItem}
+                                                        style={{ cursor: 'pointer' }}
                                                     >
                                                         {suggestion.label}
                                                     </Box>
@@ -241,7 +270,7 @@ export const FindSpecialist = (): JSX.Element => {
                                     </Portal>
                                 </Popover.Root>
                             </Field.Root>
-                            <Field.Root>
+                            <Field.Root width="auto">
                                 <Select.Root
                                     collection={radiusCollection}
                                     value={[selectedRadius]}
@@ -271,6 +300,15 @@ export const FindSpecialist = (): JSX.Element => {
                                 </Select.Root>
                             </Field.Root>
                             <Button
+                                colorPalette="cyan"
+                                variant="outline"
+                                disabled={!pendingLocation}
+                                onClick={() => { void handleGeoSearch() }}>
+                                Cerca
+                            </Button>
+                            <Button
+                                colorPalette="red"
+                                variant="outline"
                                 onClick={() => { handleMapReset() }}>
                                 Reset
                             </Button>
@@ -289,10 +327,53 @@ export const FindSpecialist = (): JSX.Element => {
                                             <span className={styles.resultName}>{result.name} - {result.clinic_name}</span>
                                             <HStack style={{ width: '100%' }}><RiMapPin2Fill /> <span>{result.clinic_address}</span></HStack>
                                             <HStack style={{ width: '100%' }}><FaPhoneAlt /> <span>{result.clinic_phone}</span></HStack>
+                                            <div className={`${styles.scheduleCollapse} ${openSpecialistSchedule?.id === result.id ? styles.scheduleCollapseOpen : ''}`}>
+                                                <div className={styles.scheduleCollapseInner}>
+                                                    {(() => {
+                                                        const sorted = [...result.clinic_schedule].sort((a, b) => Number(a.id_day) - Number(b.id_day));
+                                                        return (
+                                                            <Grid templateColumns={`auto repeat(${sorted.length.toString()}, 1fr)`} gap={2}>
+                                                                <GridItem />
+                                                                {sorted.map(item => {
+                                                                    return (
+                                                                        <GridItem key={item.id_day}>
+                                                                            <span className={styles.scheduleDay}>{item.day?.name ?? item.id_day}</span>
+                                                                        </GridItem>
+                                                                    );
+                                                                })}
+
+                                                                <GridItem><span className={styles.scheduleDay}>Mattina</span></GridItem>
+                                                                {sorted.map(item => (
+                                                                    <GridItem key={item.id_day}>
+                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                            {dayjs(item.opening_morning, 'HH:mm:ss').format('HH:mm')}
+                                                                        </span><br />
+                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                            {dayjs(item.closing_morning, 'HH:mm:ss').format('HH:mm')}
+                                                                        </span>
+                                                                    </GridItem>
+                                                                ))}
+
+                                                                <GridItem><span className={styles.scheduleDay}>Pomeriggio</span></GridItem>
+                                                                {sorted.map(item => (
+                                                                    <GridItem key={item.id_day}>
+                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                            {dayjs(item.opening_afternoon, 'HH:mm:ss').format('HH:mm')}
+                                                                        </span><br />
+                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                            {dayjs(item.closing_afternoon, 'HH:mm:ss').format('HH:mm')}
+                                                                        </span>
+                                                                    </GridItem>
+                                                                ))}
+                                                            </Grid>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
                                         </VStack>
                                         <HStack style={{ width: '100%' }} key={index}>
                                             <Button
-                                                onClick={() => { console.log('Show schedule handler ', result) }}
+                                                onClick={() => { setOpenSpecialistSchedule({ id: result.id, schedule: result.clinic_schedule }) }}
                                                 colorPalette="cyan"
                                                 variant="ghost"
                                                 ml="auto"

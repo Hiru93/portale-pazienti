@@ -31,3 +31,18 @@
 .selectedResult {
     border: 1px solid #F56565;
 }
+
+.scheduleCollapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+}
+
+.scheduleCollapseOpen {
+    grid-template-rows: 1fr;
+}
+
+.scheduleCollapseInner {
+    min-height: 0;
+    overflow: hidden;
+}

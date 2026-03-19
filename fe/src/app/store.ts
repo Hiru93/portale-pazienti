@@ -6,6 +6,7 @@ import { setupListeners } from "@reduxjs/toolkit/query"
 import { loginSlice } from "../features/login/LoginSlice"
 import { rolesApiSlice } from "@/features/login/LoginApiSlice"
 import { findSpecialistApiSlice } from "@/features/findSpecialist/FindSpecialistApiSlice"
+import { dictionaryApiSlice } from "@/features/findSpecialist/DictionaryApiSlice"
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
@@ -13,6 +14,7 @@ const rootReducer = combineSlices(
   loginSlice,
   rolesApiSlice,
   findSpecialistApiSlice,
+  dictionaryApiSlice,
 )
 // Infer the `RootState` type from the root reducer
 export type RootState = ReturnType<typeof rootReducer>
@@ -25,6 +27,7 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
     middleware: getDefaultMiddleware => {
       return getDefaultMiddleware()
         .concat(rolesApiSlice.middleware)
+        .concat(dictionaryApiSlice.middleware)
         .concat(findSpecialistApiSlice.middleware)
     },
     // Adding the api middleware enables caching, invalidation, polling,

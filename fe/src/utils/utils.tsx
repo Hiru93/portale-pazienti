@@ -1,4 +1,4 @@
-import { type JSX, useEffect, useState } from "react";
+import { type JSX, useEffect, useRef, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/app/hooks";
 import { Navigate } from "react-router";
 import { selectAccessToken, refreshUser } from "@/features/login/LoginSlice";
@@ -8,23 +8,28 @@ import { tokenParse, loadLocalInfo } from "./store-utils";
 export const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole: string }) => {
     const accessToken = useAppSelector(selectAccessToken)
     const dispatch = useAppDispatch()
-    const [initializing, setInitializing] = useState(!accessToken)
+
+    const decoded = accessToken ? tokenParse(accessToken) : null
+    const isExpired = decoded ? (!!decoded.exp && Date.now() >= decoded.exp * 1000) : false
+    const needsRefresh = !accessToken || isExpired
+
+    const [initializing, setInitializing] = useState(needsRefresh)
+    const refreshAttempted = useRef(false)
 
     useEffect(() => {
-        if (accessToken) return
+        if (!needsRefresh) return
+        if (refreshAttempted.current) return
+        refreshAttempted.current = true
         const userId = loadLocalInfo("userId")
         if (!userId) { setInitializing(false); return }
         void dispatch(refreshUser(userId)).finally(() => {
             setInitializing(false)
         })
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     if (initializing) return null
 
     const decodedToken = accessToken ? tokenParse(accessToken) : null
-
-    console.log("Decoded token in ProtectedRoute: ", decodedToken)
-    console.log("Required role: ", authLevels[requiredRole as keyof typeof authLevels])
 
     if (!accessToken) return <Navigate to="/" />
     if (!decodedToken) return <Navigate to="/" />
