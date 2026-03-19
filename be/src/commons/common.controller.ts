@@ -14,4 +14,11 @@ export class CommonController {
   async getRoles(): Promise<ReturnType<CommonService['getRoles']>> {
     return await this.commonService.getRoles();
   }
+
+  @SkipAuth()
+  @HttpCode(HttpStatus.OK)
+  @Get('days')
+  async getDays(): Promise<ReturnType<CommonService['getDays']>> {
+    return await this.commonService.getDays();
+  }
 }
