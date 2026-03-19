@@ -98,3 +98,8 @@ export type DashboardComponent = {
   icon: string,
   order: number
 }
+
+export type Day = {
+  id: string,
+  name: string
+}
