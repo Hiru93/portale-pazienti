@@ -41,7 +41,7 @@ export const setupInterceptors = (store: AppStore) => {
     res => res,
     async (error: AxiosError) => {
       const originalRequest = error.config
-      if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
+      if (!originalRequest || error.response?.status !== 401 || originalRequest._retry || originalRequest.url?.includes('/auth/refresh')) {
         return Promise.reject(error)
       }
 

@@ -1,13 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { FindSpecialistItem } from "@/app/types/FindSpecialistTypes";
-import type { RootState } from "@/app/store"; // Adjust path to your store
+import type { FindSpecialistItem } from "@/app/types";
+import type { RootState } from "@/app/store";
 
 export const findSpecialistApiSlice = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: "http://localhost:3000/api/specialist",
         prepareHeaders: (headers: Headers, { getState }) => {
             const token = (getState() as RootState).login.accessToken;
-            console.log("Token in API slice:", token);
             if (token) {
                 headers.set("Authorization", `Bearer ${token}`);
             }
