@@ -1,5 +1,4 @@
 // #region [Type Imports]
-import { Box, Button, createListCollection, Field, Grid, GridItem, HStack, Input, Popover, Portal, Select, Stack, VStack } from "@chakra-ui/react";
 import type { ChangeEvent, JSX } from "react";
 import type {
     Radius,
@@ -7,7 +6,8 @@ import type {
     LeafletSearchResult,
     FindSpecialistResultItem,
     Day,
-    ClinicSchedule
+    ClinicSchedule,
+    BookingDialogProps
 } from "@/app/types";
 // #endregion [Type Imports]
 
@@ -16,6 +16,7 @@ import styles from "./FindSpecialist.module.css";
 // #endregion [Style Imports]
 
 // #region [Library Imports]
+import { Box, Button, createListCollection, Field, Grid, GridItem, HStack, Input, Popover, Portal, Select, Stack, VStack } from "@chakra-ui/react";
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import { RiMapPin2Fill } from 'react-icons/ri'
 import type { Map } from 'leaflet'
@@ -27,6 +28,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { FaPhoneAlt } from "react-icons/fa";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { BookingDialog } from "./bookingDialog/BookingDialog";
 dayjs.extend(customParseFormat);
 // #endregion [Library Imports]
 
@@ -73,6 +75,7 @@ export const FindSpecialist = (): JSX.Element => {
     const [suggestions, setSuggestions] = useState<LeafletSearchResult[]>([]);
     const [pendingLocation, setPendingLocation] = useState<LeafletSearchResult | null>(null);
     const [openSpecialistSchedule, setOpenSpecialistSchedule] = useState<{ id: string, schedule: FindSpecialistResultItem['clinic_schedule'] } | null>(null);
+    const [selectedRange, setSelectedRange] = useState<BookingDialogProps['selectedRange'] | null>(null);
     // #endRegion [Local State]
 
     // #region [UI Logic]
@@ -344,7 +347,19 @@ export const FindSpecialist = (): JSX.Element => {
 
                                                                 <GridItem><span className={styles.scheduleDay}>Mattina</span></GridItem>
                                                                 {sorted.map(item => (
-                                                                    <GridItem key={item.id_day}>
+                                                                    <GridItem
+                                                                        key={item.id_day}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        onClick={() => {
+                                                                            setSelectedRange({
+                                                                                opening: item.opening_morning,
+                                                                                closing: item.closing_morning,
+                                                                                specialistId: result.id,
+                                                                                scheduleId: item.id,
+                                                                                slot_size_minutes: item.slot_size_minutes
+                                                                            })
+                                                                        }}
+                                                                    >
                                                                         <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
                                                                             {dayjs(item.opening_morning, 'HH:mm:ss').format('HH:mm')}
                                                                         </span><br />
@@ -356,7 +371,19 @@ export const FindSpecialist = (): JSX.Element => {
 
                                                                 <GridItem><span className={styles.scheduleDay}>Pomeriggio</span></GridItem>
                                                                 {sorted.map(item => (
-                                                                    <GridItem key={item.id_day}>
+                                                                    <GridItem
+                                                                        key={item.id_day}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        onClick={() => {
+                                                                            setSelectedRange({
+                                                                                opening: item.opening_afternoon, 
+                                                                                closing: item.closing_afternoon, 
+                                                                                specialistId: result.id, 
+                                                                                scheduleId: item.id, 
+                                                                                slot_size_minutes: item.slot_size_minutes
+                                                                            })
+                                                                        }}
+                                                                    >
                                                                         <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
                                                                             {dayjs(item.opening_afternoon, 'HH:mm:ss').format('HH:mm')}
                                                                         </span><br />
@@ -394,6 +421,12 @@ export const FindSpecialist = (): JSX.Element => {
                     </VStack>
                 </HStack>
             </Stack>
+
+            {/* Booking dialog */}
+            <BookingDialog
+                selectedRange={selectedRange}
+                onClose={() => { setSelectedRange(null) }}
+            />
         </>
     )
     // #endregion [Render]
