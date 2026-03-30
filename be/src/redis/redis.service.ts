@@ -23,4 +23,22 @@ export class RedisService {
 
     return result === 1;
   }
+
+  // Race condition guard with NX & PX options:
+  // - NX: Only set the key if it does not already exist.
+  // - PX: Set the expiration time in milliseconds.
+  async acquireLock(
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ): Promise<boolean> {
+    const result = await this.redis.set(
+      key,
+      value,
+      'PX',
+      ttlSeconds * 1000,
+      'NX',
+    );
+    return result === 'OK';
+  }
 }
