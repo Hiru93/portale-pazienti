@@ -67,3 +67,14 @@ export type Radius = {
     label: string
     value: string
 }
+
+export type BookingDialogProps = {
+    selectedRange: {
+        specialistId: string
+        scheduleId: string
+        opening: string
+        closing: string
+        slot_size_minutes: number
+    } | null
+    onClose: () => void
+}

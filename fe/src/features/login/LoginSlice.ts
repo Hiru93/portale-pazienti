@@ -64,9 +64,6 @@ export const loginSlice = createAppSlice({
           state.loginStatus = "success"
           state.logoutStatus = "idle"
           state.accessToken = access_token
-          if (access_token && loadLocalInfo("accessToken") !== access_token) {
-            localStorage.setItem("accessToken", access_token)
-          }
           const parsedToken = tokenParse(access_token)
           state.authLevel = parsedToken.user_auth
           state.userInfo = parsedToken.user_data
@@ -94,6 +91,7 @@ export const loginSlice = createAppSlice({
           state.logoutStatus = "success"
           state.accessToken = null
           localStorage.removeItem("userId")
+          localStorage.removeItem("accessToken")
           state.authLevel = null
           state.userInfo = null
         },
