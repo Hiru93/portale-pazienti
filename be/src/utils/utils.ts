@@ -92,3 +92,33 @@ export const haversineDistance = ({
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in kilometers
 };
+
+export function computeSlots(
+  opening: string,
+  closing: string,
+  slotMinutes: number,
+) {
+  const slots: { time_start: string; time_end: string }[] = [];
+  let current = toMinutes(opening);
+  const end = toMinutes(closing);
+  while (current + slotMinutes <= end) {
+    slots.push({
+      time_start: fromMinutes(current),
+      time_end: fromMinutes(current + slotMinutes),
+    });
+    current += slotMinutes;
+  }
+  return slots;
+}
+
+function toMinutes(t: string) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+function fromMinutes(m: number) {
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+export function addMinutes(time: string, minutes: number): string {
+  return fromMinutes(toMinutes(time) + minutes);
+}
