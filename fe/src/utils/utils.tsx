@@ -4,6 +4,7 @@ import { Navigate } from "react-router";
 import { selectAccessToken, refreshUser } from "@/features/login/LoginSlice";
 import { authLevels } from "./constants";
 import { tokenParse, loadLocalInfo } from "./store-utils";
+import { Loader } from "@/features/loader/Loader";
 
 export const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole: string }) => {
     const accessToken = useAppSelector(selectAccessToken)
@@ -27,7 +28,7 @@ export const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Eleme
         })
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (initializing) return null
+    if (initializing) return <Loader />
 
     const decodedToken = accessToken ? tokenParse(accessToken) : null
 
