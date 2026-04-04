@@ -1,27 +1,56 @@
-# vite-template-redux
+# Portale Pazienti - Frontend
 
-Uses [Vite](https://vitejs.dev/), [Vitest](https://vitest.dev/), and [React Testing Library](https://github.com/testing-library/react-testing-library) to create a modern [React](https://react.dev/) app compatible with [Create React App](https://create-react-app.dev/)
+React 19 + Vite frontend for the Portale Pazienti project.
 
-```sh
-npx tiged reduxjs/redux-templates/packages/vite-template-redux my-app
+## Prerequisites
+
+- Node.js 20+
+- npm
+- Backend running on `http://localhost:3000` (see `be/README.md`)
+
+## Setup
+
+```bash
+npm install
+npm run dev
 ```
 
-## Goals
+The dev server starts at **http://localhost:5173**.
 
-- Easy migration from Create React App or Vite
-- As beginner friendly as Create React App
-- Optimized performance compared to Create React App
-- Customizable without ejecting
+## Available commands
 
-## Scripts
+| Command | Description |
+|---|---|
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview production build locally |
+| `npm run start` | Alias for `dev` |
+| `npm run test` | Run tests with Vitest |
+| `npm run type-check` | TypeScript type checking only |
+| `npm run lint` | Lint the codebase |
+| `npm run lint:fix` | Lint and auto-fix |
+| `npm run format` | Format code with Prettier |
+| `npm run format:check` | Check formatting without writing |
 
-- `dev`/`start` - start dev server and open browser
-- `build` - build for production
-- `preview` - locally preview production build
-- `test` - launch test runner
+## Project structure
 
-## Inspiration
+```
+fe/src/
+├── app/                # Redux store, typed hooks, shared types
+├── features/           # Feature modules (login, topbar, find-specialist, ...)
+├── components/         # Shared UI components
+├── utils/
+│   ├── apiClient.ts        # Axios instance (baseURL, withCredentials)
+│   ├── axiosInterceptor.ts # Auth header injection + 401 / token refresh handling
+│   └── utils.tsx           # ProtectedRoute and other helpers
+├── App.tsx             # Router configuration
+└── main.tsx            # Entry point — bootstraps interceptors
+```
 
-- [Create React App](https://github.com/facebook/create-react-app/tree/main/packages/cra-template)
-- [Vite](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react)
-- [Vitest](https://github.com/vitest-dev/vitest/tree/main/examples/react-testing-lib)
+## API communication
+
+All requests go through the Axios instance in `src/utils/apiClient.ts` (`baseURL: http://localhost:3000`, `withCredentials: true`).
+
+The interceptor in `src/utils/axiosInterceptor.ts` automatically:
+- Injects the `Authorization: Bearer` header from the Redux store
+- Handles `401` responses by attempting a silent token refresh before retrying the original request

@@ -94,9 +94,18 @@ portale-pazienti/
 
 ## Getting started
 
-### 1. Database setup
+### 1. Environment setup
 
-From the `be/` directory, start the PostgreSQL container and run migrations:
+```bash
+cd be
+cp .env.example .env
+```
+
+Open `be/.env` and fill in your own values for the secrets and credentials. The other defaults work as-is for local development.
+
+### 2. Database setup
+
+From the `be/` directory, start the PostgreSQL + Redis containers and run migrations:
 
 ```bash
 cd be
@@ -104,18 +113,18 @@ npm run db-start
 ```
 
 This will:
-- Build and start the PostgreSQL container (exposed on port **5433**)
+- Build and start all containers (PostgreSQL on port **5433**, Redis on **6379**, Redis Commander on **8081**)
 - Wait for the database to be ready
 - Run all pending Knex migrations
 
-To stop and remove the database container:
+To stop and remove all containers:
 
 ```bash
 cd be
 npm run db-stop
 ```
 
-### 2. Backend
+### 3. Backend
 
 ```bash
 cd be
@@ -123,9 +132,9 @@ npm install
 npm run start:dev
 ```
 
-The API server starts on **http://localhost:3000** with Swagger docs available at the root.
+The API server starts on **http://localhost:3000** with Swagger docs at **http://localhost:3000/api**.
 
-### 3. Frontend
+### 4. Frontend
 
 ```bash
 cd fe
@@ -133,7 +142,7 @@ npm install
 npm run dev
 ```
 
-The Vite dev server starts and opens the app in your browser (default **http://localhost:5173**).
+The Vite dev server starts at **http://localhost:5173**.
 
 ## Available commands
 
@@ -190,22 +199,27 @@ Services:
 
 ## Environment variables
 
-The backend uses a `.env` file in `be/` with the following variables:
+The backend reads from `be/.env`. Copy `be/.env.example` and fill in your values.
 
 | Variable | Description |
 |---|---|
-| `PP_LOADED_ENV` | Environment name (e.g. `Development`) |
+| `PP_LOADED_ENV` | Environment label (e.g. `Development`) |
+| `PP_DB_CONTAINER_NAME` | Name for the PostgreSQL Docker container |
 | `PP_PG_DB` | PostgreSQL database name |
 | `PP_PG_USER` | PostgreSQL user |
 | `PP_PG_PASS` | PostgreSQL password |
-| `PP_PG_HOST` | PostgreSQL host (`localhost` for local, `db` in Docker) |
-| `PP_PG_PORT` | PostgreSQL port (`5433` local, `5432` in Docker) |
+| `PP_PG_HOST` | PostgreSQL host (`localhost` for local dev) |
+| `PP_PG_PORT` | PostgreSQL host port — must be **`5433`** (Docker maps `5433→5432`; the `be` container overrides this to `5432` internally) |
+| `PP_BE_CONTAINER_NAME` | Name for the backend Docker container |
 | `PP_BE_SECRET` | JWT signing secret |
 | `PP_BE_SALT` | Bcrypt salt |
 | `PP_SALT_RNDS` | Bcrypt salt rounds |
-| `PP_REDIS_HOST` | Redis host (`localhost` for local, `redis` in Docker) |
+| `PP_REDIS_CONTAINER_NAME` | Name for the Redis Docker container |
+| `PP_REDIS_HOST` | Redis host (`redis` inside Docker network) |
 | `PP_REDIS_PORT` | Redis port (default `6379`) |
 | `PP_REDIS_PASS` | Redis password |
+| `PP_REDIS_COMMANDER_CONTAINER_NAME` | Name for the Redis Commander container |
+| `PP_REDIS_COMMANDER_PORT` | Redis Commander web UI port (default `8081`) |
 
 ---
 
