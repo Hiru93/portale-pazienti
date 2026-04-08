@@ -46,3 +46,7 @@
     min-height: 0;
     overflow: hidden;
 }
+
+.scheduleBaseContainer {
+    width: 100%;
+}

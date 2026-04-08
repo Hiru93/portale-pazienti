@@ -16,7 +16,7 @@ import styles from "./FindSpecialist.module.css";
 // #endregion [Style Imports]
 
 // #region [Library Imports]
-import { Box, Button, createListCollection, Field, Grid, GridItem, HStack, Input, Popover, Portal, Select, Stack, VStack } from "@chakra-ui/react";
+import { Box, Button, createListCollection, Field, HStack, Input, Popover, Portal, Select, Stack, VStack } from "@chakra-ui/react";
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import { RiMapPin2Fill } from 'react-icons/ri'
 import type { Map } from 'leaflet'
@@ -76,6 +76,7 @@ export const FindSpecialist = (): JSX.Element => {
     const [pendingLocation, setPendingLocation] = useState<LeafletSearchResult | null>(null);
     const [openSpecialistSchedule, setOpenSpecialistSchedule] = useState<{ id: string, schedule: FindSpecialistResultItem['clinic_schedule'] } | null>(null);
     const [selectedRange, setSelectedRange] = useState<BookingDialogProps['selectedRange'] | null>(null);
+    const [hasAttempedSearch, setHasAttempeledSearch] = useState<boolean>(false);
     // #endRegion [Local State]
 
     // #region [UI Logic]
@@ -195,6 +196,8 @@ export const FindSpecialist = (): JSX.Element => {
         setGeoSearchParams('')
         setSuggestions([]);
         setPendingLocation(null);
+        setSelectedRadius('');
+        setHasAttempeledSearch(false);
     }, [map])
 
     const handleSuggestionSelect = useCallback((suggestion: LeafletSearchResult) => {
@@ -204,10 +207,10 @@ export const FindSpecialist = (): JSX.Element => {
     }, [])
 
     const handleGeoSearch = useCallback(async () => {
-        if (!pendingLocation) return
+        if (!pendingLocation || !selectedRadius) return
         const query = {
             ...pendingLocation,
-            radius: selectedRadius || '25'
+            radius: selectedRadius
         };
         setGeoSearchParams(query.label);
         setSuggestions([]);
@@ -273,7 +276,13 @@ export const FindSpecialist = (): JSX.Element => {
                                     </Portal>
                                 </Popover.Root>
                             </Field.Root>
-                            <Field.Root width="auto">
+                            <Field.Root
+                                required
+                                invalid={hasAttempedSearch && !selectedRadius}
+                                width="auto"
+                                position="relative"
+                            >
+                                <Field.RequiredIndicator position="absolute" top="-8px" right="-10px" zIndex={1} />
                                 <Select.Root
                                     collection={radiusCollection}
                                     value={[selectedRadius]}
@@ -301,12 +310,21 @@ export const FindSpecialist = (): JSX.Element => {
                                         </Select.Positioner>
                                     </Portal>
                                 </Select.Root>
+                                <Field.ErrorText
+                                    position="absolute"
+                                    top="100%"
+                                >
+                                    Seleziona una distanza massima
+                                </Field.ErrorText>
                             </Field.Root>
                             <Button
                                 colorPalette="cyan"
                                 variant="outline"
                                 disabled={!pendingLocation}
-                                onClick={() => { void handleGeoSearch() }}>
+                                onClick={() => {
+                                    setHasAttempeledSearch(true);
+                                    void handleGeoSearch()
+                                }}>
                                 Cerca
                             </Button>
                             <Button
@@ -323,76 +341,78 @@ export const FindSpecialist = (): JSX.Element => {
                                         key={index}
                                         boxShadow={selectedResult?.name === result.name ? 'md' : ''}
                                         borderRadius={selectedResult?.name === result.name ? 'md' : ''}
-                                        className={`${styles.resultItem} ${selectedResult?.name === result.name ? styles.selectedResult : ''}`}
-                                        style={{ width: '100%' }}
+                                        className={`${styles.resultItem} ${selectedResult?.name === result.name ? styles.selectedResult : ''} ${styles.scheduleBaseContainer}`}
                                         onClick={() => { handleDiveInMap(result) }}>
                                         <VStack alignItems="flex-start" gap={0}>
                                             <span className={styles.resultName}>{result.name} - {result.clinic_name}</span>
-                                            <HStack style={{ width: '100%' }}><RiMapPin2Fill /> <span>{result.clinic_address}</span></HStack>
-                                            <HStack style={{ width: '100%' }}><FaPhoneAlt /> <span>{result.clinic_phone}</span></HStack>
-                                            <div className={`${styles.scheduleCollapse} ${openSpecialistSchedule?.id === result.id ? styles.scheduleCollapseOpen : ''}`}>
-                                                <div className={styles.scheduleCollapseInner}>
+                                            <HStack className={styles.scheduleBaseContainer}><RiMapPin2Fill /> <span>{result.clinic_address}</span></HStack>
+                                            <HStack className={styles.scheduleBaseContainer}><FaPhoneAlt /> <span>{result.clinic_phone}</span></HStack>
+                                            <div
+                                                className={`${styles.scheduleCollapse} ${openSpecialistSchedule?.id === result.id ? styles.scheduleCollapseOpen : ''} ${styles.scheduleBaseContainer}`}
+                                            >
+                                                <div
+                                                    className={styles.scheduleCollapseInner}
+                                                    style={{ padding: '5px' }}
+                                                >
                                                     {(() => {
                                                         const sorted = [...result.clinic_schedule].sort((a, b) => Number(a.id_day) - Number(b.id_day));
                                                         return (
-                                                            <Grid templateColumns={`auto repeat(${sorted.length.toString()}, 1fr)`} gap={2}>
-                                                                <GridItem />
-                                                                {sorted.map(item => {
-                                                                    return (
-                                                                        <GridItem key={item.id_day}>
-                                                                            <span className={styles.scheduleDay}>{item.day?.name ?? item.id_day}</span>
-                                                                        </GridItem>
-                                                                    );
-                                                                })}
-
-                                                                <GridItem><span className={styles.scheduleDay}>Mattina</span></GridItem>
+                                                            <HStack gap={2} flexWrap="wrap" width="100%" pt={2} alignItems="stretch">
                                                                 {sorted.map(item => (
-                                                                    <GridItem
+                                                                    <VStack
                                                                         key={item.id_day}
-                                                                        style={{ cursor: 'pointer' }}
-                                                                        onClick={() => {
-                                                                            setSelectedRange({
-                                                                                opening: item.opening_morning,
-                                                                                closing: item.closing_morning,
-                                                                                specialistId: result.id,
-                                                                                scheduleId: item.id,
-                                                                                slot_size_minutes: item.slot_size_minutes
-                                                                            })
-                                                                        }}
+                                                                        flex={1}
+                                                                        minW="70px"
+                                                                        borderRadius="md"
+                                                                        px={3}
+                                                                        py={2}
+                                                                        gap={1}
+                                                                        alignItems="center"
+                                                                        boxShadow="0 0 0 1px rgba(6, 182, 212, 0.25), 0 2px 10px rgba(6, 182, 212, 0.12)"
                                                                     >
-                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
-                                                                            {dayjs(item.opening_morning, 'HH:mm:ss').format('HH:mm')}
-                                                                        </span><br />
-                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
-                                                                            {dayjs(item.closing_morning, 'HH:mm:ss').format('HH:mm')}
-                                                                        </span>
-                                                                    </GridItem>
+                                                                        <span className={styles.scheduleDay}>{item.day?.name ?? item.id_day}</span>
+                                                                        <VStack gap={0} alignItems="center" style={{ cursor: 'pointer' }}
+                                                                            onClick={() => {
+                                                                                setSelectedRange({
+                                                                                    opening: item.opening_morning,
+                                                                                    closing: item.closing_morning,
+                                                                                    specialistId: result.id,
+                                                                                    scheduleId: item.id,
+                                                                                    slot_size_minutes: item.slot_size_minutes
+                                                                                })
+                                                                            }}
+                                                                        >
+                                                                            <span className={styles.scheduleDay} style={{ fontSize: '0.7em', opacity: 0.6 }}>Mat.</span>
+                                                                            <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                                {dayjs(item.opening_morning, 'HH:mm:ss').format('HH:mm')}
+                                                                            </span>
+                                                                            <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                                {dayjs(item.closing_morning, 'HH:mm:ss').format('HH:mm')}
+                                                                            </span>
+                                                                        </VStack>
+                                                                        <VStack gap={0} alignItems="center" style={{ cursor: 'pointer' }}
+                                                                            onClick={() => {
+                                                                                setSelectedRange({
+                                                                                    opening: item.opening_afternoon,
+                                                                                    closing: item.closing_afternoon,
+                                                                                    specialistId: result.id,
+                                                                                    scheduleId: item.id,
+                                                                                    slot_size_minutes: item.slot_size_minutes
+                                                                                })
+                                                                            }}
+                                                                        >
+                                                                            <span className={styles.scheduleDay} style={{ fontSize: '0.7em', opacity: 0.6 }}>Pom.</span>
+                                                                            <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                                {dayjs(item.opening_afternoon, 'HH:mm:ss').format('HH:mm')}
+                                                                            </span>
+                                                                            <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
+                                                                                {dayjs(item.closing_afternoon, 'HH:mm:ss').format('HH:mm')}
+                                                                            </span>
+                                                                        </VStack>
+                                                                    </VStack>
                                                                 ))}
+                                                            </HStack>
 
-                                                                <GridItem><span className={styles.scheduleDay}>Pomeriggio</span></GridItem>
-                                                                {sorted.map(item => (
-                                                                    <GridItem
-                                                                        key={item.id_day}
-                                                                        style={{ cursor: 'pointer' }}
-                                                                        onClick={() => {
-                                                                            setSelectedRange({
-                                                                                opening: item.opening_afternoon, 
-                                                                                closing: item.closing_afternoon, 
-                                                                                specialistId: result.id, 
-                                                                                scheduleId: item.id, 
-                                                                                slot_size_minutes: item.slot_size_minutes
-                                                                            })
-                                                                        }}
-                                                                    >
-                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
-                                                                            {dayjs(item.opening_afternoon, 'HH:mm:ss').format('HH:mm')}
-                                                                        </span><br />
-                                                                        <span className={styles.scheduleTime} style={{ whiteSpace: 'nowrap' }}>
-                                                                            {dayjs(item.closing_afternoon, 'HH:mm:ss').format('HH:mm')}
-                                                                        </span>
-                                                                    </GridItem>
-                                                                ))}
-                                                            </Grid>
                                                         );
                                                     })()}
                                                 </div>
