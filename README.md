@@ -144,6 +144,40 @@ npm run dev
 
 The Vite dev server starts at **http://localhost:5173**.
 
+## Local debugging (VS Code)
+
+A `.vscode/launch.json` is included in the repository with two ready-to-use debug configurations for the backend.
+
+### Configurations
+
+| Configuration | Description |
+|---|---|
+| **BE: Launch (debug + watch)** | Starts the NestJS server directly from VS Code with the debugger attached. Breakpoints work immediately. The server recompiles and restarts on file changes. |
+| **BE: Attach to running process** | Attaches to an already-running debug server (started manually via `npm run start:debug`). Re-attaches automatically after each restart. |
+
+To use either configuration, open the **Run and Debug** panel in VS Code (`Ctrl+Shift+D`) and select one from the dropdown.
+
+### Prerequisites
+
+Before using the launch configurations, make sure your `be/.env` has the following values set for local development (not the Docker service names):
+
+```env
+PP_PG_HOST=localhost
+PP_PG_PORT=5433
+PP_REDIS_HOST=localhost
+```
+
+> These values differ from the Docker environment, where Compose injects `PP_PG_HOST=db` and `PP_REDIS_HOST=redis` directly into the container — overriding `.env` automatically. No code change is needed to switch between the two environments.
+
+The infrastructure containers (PostgreSQL, Redis) must be running before launching the debugger. Start them with:
+
+```bash
+cd be
+npm run db-start
+```
+
+---
+
 ## Available commands
 
 ### Backend (`be/`)
@@ -215,7 +249,7 @@ The backend reads from `be/.env`. Copy `be/.env.example` and fill in your values
 | `PP_BE_SALT` | Bcrypt salt |
 | `PP_SALT_RNDS` | Bcrypt salt rounds |
 | `PP_REDIS_CONTAINER_NAME` | Name for the Redis Docker container |
-| `PP_REDIS_HOST` | Redis host (`redis` inside Docker network) |
+| `PP_REDIS_HOST` | Redis host — use `localhost` for local dev; Docker Compose overrides this to `redis` (the service name) inside the container network |
 | `PP_REDIS_PORT` | Redis port (default `6379`) |
 | `PP_REDIS_PASS` | Redis password |
 | `PP_REDIS_COMMANDER_CONTAINER_NAME` | Name for the Redis Commander container |
