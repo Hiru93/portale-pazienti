@@ -97,30 +97,6 @@ export class UserCommonPropsDto {
 
 /**
  * @description
- * [USERS - ALL] User creation DTO
- */
-export class CreateUserDto {
-  @ApiProperty({
-    description: '[USERS - ALL] Operator user-info',
-    example: userDefaultDataDTO.register.operator,
-  })
-  opInfo: CreateOperatorDto | null;
-
-  @ApiProperty({
-    description: '[USERS - ALL] Patient user-info',
-    example: userDefaultDataDTO.register.patient,
-  })
-  patInfo: CreatePatientDto | null;
-
-  @ApiProperty({
-    description: '[USERS - ALL] Specialist user-info',
-    example: userDefaultDataDTO.register.specialist,
-  })
-  specInfo: CreateSpecialistDto | null;
-}
-
-/**
- * @description
  * [USERS - OPERATORS] Operator specific characteristics
  */
 export class CreateOperatorDto extends PickType(UserCommonPropsDto, [
@@ -197,6 +173,30 @@ export class CreateSpecialistDto extends UserCommonPropsDto {
   @IsString()
   @IsNotEmpty()
   clinic_phone: string;
+}
+
+/**
+ * @description
+ * [USERS - ALL] User creation DTO
+ */
+export class CreateUserDto {
+  @ApiProperty({
+    description: '[USERS - ALL] Operator user-info',
+    example: userDefaultDataDTO.register.operator,
+  })
+  opInfo: CreateOperatorDto | null;
+
+  @ApiProperty({
+    description: '[USERS - ALL] Patient user-info',
+    example: userDefaultDataDTO.register.patient,
+  })
+  patInfo: CreatePatientDto | null;
+
+  @ApiProperty({
+    description: '[USERS - ALL] Specialist user-info',
+    example: userDefaultDataDTO.register.specialist,
+  })
+  specInfo: CreateSpecialistDto | null;
 }
 
 export class LogUserDto extends PickType(UserCommonPropsDto, [
