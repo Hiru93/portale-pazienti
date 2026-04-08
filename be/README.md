@@ -10,30 +10,41 @@ NestJS backend for the Portale Pazienti project, using PostgreSQL (via Knex) and
 
 ## Environment variables
 
-Create a `.env` file in the project root with the following structure:
+Copy `.env.example` and fill in your values:
 
-```env
-# General
-PP_LOADED_ENV=Development          # Environment label (Development, Production, ...)
-
-# Docker container names
-PP_DB_CONTAINER_NAME=pp_db           # Name for the PostgreSQL container
-PP_BE_CONTAINER_NAME=pp_be           # Name for the backend container
-
-# PostgreSQL connection
-PP_PG_DB=portale_pazienti            # Database name
-PP_PG_USER=exaMantainer              # Database user
-PP_PG_PASS=pass123%                  # Database password
-PP_PG_HOST=localhost                 # Host (use "localhost" for local dev, "db" is set automatically in Docker)
-PP_PG_PORT=5433                      # Exposed port on the host (maps to 5432 inside the container)
-
-# Auth / Security
-PP_BE_SECRET=<your_jwt_secret>       # JWT secret key
-PP_BE_SALT=<your_bcrypt_salt>        # Bcrypt salt
-PP_SALT_RNDS=10                      # Bcrypt salt rounds
+```bash
+cp .env.example .env
 ```
 
-> When running via `docker-compose`, `PP_PG_HOST` is overridden to `db` (the service name) and `PP_PG_PORT` is set to `5432` internally. The `.env` values are only relevant for local development.
+```env
+PP_LOADED_ENV=Development
+
+# --- PostgreSQL ---
+PP_DB_CONTAINER_NAME=pp-db
+PP_PG_DB=portale-pazienti
+PP_PG_USER=your_db_user
+PP_PG_PASS=your_db_password
+PP_PG_HOST=localhost
+PP_PG_PORT=5433          # host-side port; Docker maps 5433 → 5432 inside the container
+
+# --- Backend ---
+PP_BE_CONTAINER_NAME=pp-be
+PP_BE_SECRET=your_jwt_secret
+PP_BE_SALT=your_bcrypt_salt
+PP_SALT_RNDS=10
+
+# --- Redis ---
+PP_REDIS_CONTAINER_NAME=pp-redis
+PP_REDIS_HOST=redis      # service name inside the Docker network
+PP_REDIS_PORT=6379
+PP_REDIS_PASS=your_redis_password
+
+# --- Redis Commander (dev UI) ---
+PP_REDIS_COMMANDER_CONTAINER_NAME=redis-commander
+PP_REDIS_COMMANDER_PORT=8081
+```
+
+> When running via Docker Compose, `PP_PG_HOST` is overridden to `db` and `PP_PG_PORT` to `5432` for container-to-container communication. The `.env` values for host and port are only used when running knex migrations or the backend directly on the host.
 
 ## Project setup
 
